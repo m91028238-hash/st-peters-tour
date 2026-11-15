@@ -1,6 +1,6 @@
 // St Peter's Basilica interior, in metres. Origin: centre of the crossing at floor level; +z towards the entrance, -z towards the apse.
 import * as THREE from 'three';
-import * as T from './textures.js?v=1';
+import * as T from './textures.js?v=51';
 const V=(x,y,z)=>new THREE.Vector3(x,y,z),PI=Math.PI;
 export const D={NHW:13,ENTR:126,CROSS:20.75,PIER:31,BAY:23.75,ARCH_HW:6.5,ARCH_SPR:15,SPR:33.5,DOME_R:20.75,APSE_C:-47,TRANS_C:55.5,AISLE0:19,AISLE1:31,AISLE_H:22};
 export const archCentres=[0,1,2,3].map(k=>D.PIER+D.BAY*(k+.5));
@@ -60,8 +60,18 @@ export class Basilica{
       dark:std(null,{color:0x2a1e16,roughness:.8}),
       marbleW:new THREE.MeshStandardMaterial({color:0xf2ede4,roughness:.2}),
     };
-    const textOf=s=>T.tex(T.frieze(s),{aniso:an});
-    this.friezeTex=textOf('TV ES PETRVS ET SVPER HANC PETRAM AEDIFICABO ECCLESIAM MEAM · ET TIBI DABO CLAVES REGNI CAELORVM · QVODCVMQVE LIGAVERIS SVPER TERRAM ERIT LIGATVM ET IN CAELIS · ET QVODCVMQVE SOLVERIS SVPER TERRAM ERIT SOLVTVM ET IN CAELIS');
+    // one shared atlas: nave south, nave north, dome drum, apse Latin, blank (transepts — wording not assigned; left/right sources conflict)
+    this.friezeRows=[
+      {text:'EGO ROGAVI PRO TE O PETRE VT NON DEFICIAT FIDES TVA ET TV ALIQVANDO CONVERSVS CONFIRMA FRATRES TVOS',ink:'#1c1a16',fit:'spread'},
+      {text:'QVODCVMQVE LIGAVERIS SVPER TERRAM ERIT LIGATVM ET IN COELIS ET QVODCVMQVE SOLVERIS SVPER TERRAM ERIT SOLVTVM ET IN COELIS',ink:'#1c1a16',fit:'spread'},
+      {text:'TV ES PETRVS ET SVPER HANC PETRAM AEDIFICABO ECCLESIAM MEAM ET TIBI DABO CLAVES REGNI CAELORVM ·',ink:'#1a2a6a',fit:'spread'},
+      {text:'O PASTOR ECCLESIAE TV OMNES CHRISTI PASCIS AGNOS ET OVES',ink:'#1c1a16',fit:'left'},
+      {text:''}
+    ];
+    this.friezeN=this.friezeRows.length;
+    this.friezeTex=T.tex(T.friezeAtlas(this.friezeRows,{w:this.mobile?2048:4096,rowH:this.mobile?64:128}),{aniso:an});
+    this.friezeTex.wrapT=THREE.ClampToEdgeWrapping;
+    this.friezeMat=()=>new THREE.MeshStandardMaterial({map:this.friezeTex,roughness:.4,metalness:.28,emissive:0x3a2a10,emissiveIntensity:.12,side:THREE.DoubleSide});
     this._floor();this._nave();this._aisles();this._crossing();this._arms();
     this.onProgress('Michelangelo’s dome…');
     const LS=n=>T.loadImg('assets/statues/'+n);
@@ -100,6 +110,9 @@ export class Basilica{
     // aisles: grey bands under each arcade
     for(const s of [-1,1])archCentres.forEach(zc=>dec(T.naveInlay(M,2),5,9,s*25,zc,0,{opacity:.9}));
   }
+  // map a 0–1 uv mesh onto one row of the inscription atlas (optional u-range for a continuous run)
+  _friezeUV(geo,row,u0=0,u1=1,flipU=false){const U=geo.attributes.uv,n=this.friezeN,v0=(n-row-1)/n,v1=(n-row)/n,pad=(v1-v0)*.08;
+    for(let i=0;i<U.count;i++){const u=U.getX(i),v=U.getY(i);U.setXY(i,u0+(flipU?1-u:u)*(u1-u0),v0+pad+v*(v1-v0-2*pad))}U.needsUpdate=true;return geo}
   // ---------- nave: arcades, pilasters, entablature, coffered barrel vault, lunette windows ----------
   _nave(){const {NHW,ENTR,PIER,SPR,ARCH_HW,ARCH_SPR}=D,m=this.mat,NY=9.6;
     for(const s of [-1,1]){
@@ -128,7 +141,7 @@ export class Basilica{
           (this.saintSpots=this.saintSpots||[]).push([V(s*(NHW+.2),NY,zp),s>0?-PI/2:PI/2])}}
       // entablature: architrave, inscribed frieze, cornice
       this.box(1.2,1.4,ENTR-PIER,s*(NHW-.6),28.7,(ENTR+PIER)/2,m.travWarm);
-      const fr=this.add(new THREE.PlaneGeometry(ENTR-PIER,1.7),new THREE.MeshStandardMaterial({map:this.friezeTex,roughness:.35,metalness:.4}));
+      const fr=this.add(this._friezeUV(new THREE.PlaneGeometry(ENTR-PIER,1.7),s>0?1:0),this.friezeMat());
       fr.rotation.y=s>0?-PI/2:PI/2;fr.position.set(s*(NHW-1.21),30.3,(ENTR+PIER)/2);
       this.box(1.25,.1,ENTR-PIER,s*(NHW-.6),29.4,(ENTR+PIER)/2,m.gold);
       this.box(2.0,1.4,ENTR-PIER,s*(NHW-1.0),32.4,(ENTR+PIER)/2,m.travWarm,{cast:false});
@@ -326,9 +339,9 @@ export class Basilica{
     // pendentives (4-fold symmetric: near pair copied from far pair)
     {const sp=medSplit(projectUV(this.domeGeo[0],true));this.add(sp.main,mat,{recv:false});
      (this.medImgs||[]).forEach((im,i)=>{if(!im)return;const t=T.tex(im,{wrap:false});this.add(sp.meds[i],new THREE.MeshBasicMaterial({map:t,side:THREE.DoubleSide,color:new THREE.Color(...this.medCol[i])}),{recv:false})})}
-    // inscription frieze: projected directly (text is not symmetric)
+    // inscription frieze: legible canvas lettering on the drum ring (photo projection is not readable)
     const lathe=(pts,n)=>new THREE.LatheGeometry(pts.map(([r,y])=>new THREE.Vector2(r,y)),n);
-    this.add(projectUV(lathe([[R,47.3],[R,50.0]],seg),false),mat,{recv:false});
+    this.add(this._friezeUV(lathe([[R-.05,47.3],[R-.05,50.0]],seg),2,0,1,true),this.friezeMat(),{recv:false});
     // drum, attic, shell, oculus and lantern (16-fold symmetric)
     const pr=[[R,50],[R-.8,50.4],[R-.8,51.0],[R,51.3],[R,64],[R-.9,64.6],[R-.9,65.4],[R,66],[R,71]];
     for(let i=1;i<=40;i++){const th=i/40*1.3623;pr.push([R*Math.cos(th),71+37*Math.sin(th)])}
@@ -348,21 +361,25 @@ export class Basilica{
     const pl=new THREE.Mesh(new THREE.CylinderGeometry(1.5,1.6,.45,32),this.mat.marbleW);pl.position.set(0,.22,-1.15);pl.scale.z=.75;pl.receiveShadow=true;face.add(pl)})}
   // ---------- transepts and apse ----------
   _arms(){const {NHW,PIER,SPR,APSE_C,TRANS_C}=D,m=this.mat;
-    const arm=(rot,end)=>{const g=new THREE.Group();g.rotation.y=rot;this.s.add(g);const add=(geo,mat)=>{const o=new THREE.Mesh(geo,mat);o.receiveShadow=true;g.add(o);return o};
+    const arm=(rot,end,kind)=>{const g=new THREE.Group();g.rotation.y=rot;this.s.add(g);const add=(geo,mat)=>{const o=new THREE.Mesh(geo,mat);o.receiveShadow=true;g.add(o);return o};
       const len=end-PIER; // arm runs from z=PIER to z=end (local +z away from crossing)
+      const run=2*len+Math.PI*NHW; // continuous tribune length (two sides + semicircle)
       for(const s of [-1,1]){add(wallShape([[PIER,0],[end,0],[end,SPR],[PIER,SPR]],[],(a,y)=>V(s*NHW,y,a)),m.trav);
         for(const z of [PIER+2.6,end-2.6]){const p=new THREE.Mesh(new THREE.BoxGeometry(.5,26,2.3),m.flute);p.position.set(s*(NHW-.25),13,z);g.add(p)}
         const n=new THREE.Mesh(new THREE.CylinderGeometry(1.6,1.6,7,16,1,true,0,PI),m.dark);n.rotation.y=s>0?0:PI;n.position.set(s*(NHW+.05),8,(PIER+end)/2);g.add(n);
         const e=new THREE.Mesh(new THREE.BoxGeometry(2,1.4,len),m.travWarm);e.position.set(s*(NHW-1),32.4,PIER+len/2);g.add(e);
-        const fr=new THREE.Mesh(new THREE.PlaneGeometry(len,1.7),new THREE.MeshStandardMaterial({map:this.friezeTex,roughness:.35,metalness:.4}));fr.rotation.y=s>0?-PI/2:PI/2;fr.position.set(s*(NHW-.02),30.3,PIER+len/2);g.add(fr);
+        const u0=kind==='apse'?(s>0?0: (len+Math.PI*NHW)/run):0,u1=kind==='apse'?(s>0?len/run:1):1;
+        const fr=new THREE.Mesh(this._friezeUV(new THREE.PlaneGeometry(len,1.7),kind==='apse'?3:4,u0,u1),this.friezeMat());fr.rotation.y=s>0?-PI/2:PI/2;fr.position.set(s*(NHW-.02),30.3,PIER+len/2);g.add(fr);
         const w=this._window(V(s*(NHW-.8),33.8,PIER+len/2),5,5.2,s>0?-PI/2:PI/2,true);this.s.remove(w);g.add(w);}
       add(surf((u,v)=>V(Math.cos(u*PI)*NHW,SPR+Math.sin(u*PI)*NHW,PIER+v*len),48,12,4,len/10.2),m.coffer);
       // semicircular apse end: wall + coffered half dome
       const wallM=m.trav,apse=add(surf((u,v)=>{const a=-PI/2+u*PI;return V(Math.sin(a)*NHW,v*SPR,end+Math.cos(a)*NHW)},48,8,8,SPR/4),wallM);
       add(surf((u,v)=>{const a=-PI/2+u*PI,e=v*PI/2;return V(Math.sin(a)*NHW*Math.cos(e),SPR+NHW*Math.sin(e),end+Math.cos(a)*NHW*Math.cos(e))},48,16,6,3),m.coffer);
+      if(kind==='apse'){const cg=surf((u,v)=>{const a=PI/2-u*PI;return V(Math.sin(a)*(NHW-.06),29.45+v*1.7,end+Math.cos(a)*(NHW-.06))},64,1);
+        add(this._friezeUV(cg,3,len/run,(len+Math.PI*NHW)/run),this.friezeMat())}
       for(const a of [-PI/3,0,PI/3]){if(rot===PI&&a===0)continue;const w=this._window(V(Math.sin(a)*(NHW-.4),20,end+Math.cos(a)*(NHW-.4)),4,7,a+PI,true);this.s.remove(w);g.add(w)}
       return {g,apse}};
-    this.apseArm=arm(PI,-APSE_C);arm(PI/2,TRANS_C);arm(-PI/2,TRANS_C);
+    this.apseArm=arm(PI,-APSE_C,'apse');arm(PI/2,TRANS_C,'trans');arm(-PI/2,TRANS_C,'trans');
   }
   _apsePhoto(img){ // the apse wall with Bernini's Cathedra Petri: frontal photo (V. Muratov, CC BY-SA 3.0) wrapped onto the half-cylinder
     const t=T.tex(img,{wrap:false,aniso:this.r.capabilities.getMaxAnisotropy()});const H=29.4,R=D.NHW,Z=D.APSE_C;

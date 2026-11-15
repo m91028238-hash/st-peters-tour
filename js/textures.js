@@ -46,6 +46,22 @@ export function frieze(text,{w=4096,h=160,ink='#20305a',gold=['#d9b25a','#b98a32
   const tw=g.measureText(text).width,sp=(w-tw)/Math.max(1,text.length);let x=sp/2;
   for(const ch of text){g.fillText(ch,x,h*.53);x+=g.measureText(ch).width+sp}
   g.fillStyle='rgba(80,50,20,.6)';g.fillRect(0,0,w,6);g.fillRect(0,h-6,w,6);return c}
+// one shared atlas of gold-mosaic inscription rows (dark/blue capitals on gold, as in the basilica)
+export function friezeAtlas(rows,{w,rowH}={}){const n=rows.length,W=w||4096,H=rowH||128,Htot=H*n,[c,g]=cv(W,Htot);
+  const font=`bold ${H*.62}px "Times New Roman","Nimbus Roman","Liberation Serif","DejaVu Serif",Georgia,serif`;
+  rows.forEach((row,i)=>{const y=i*H,text=row.text||'',ink=row.ink||'#20305a',gold=row.gold||['#d9b25a','#b98a32'],fit=row.fit||'spread';
+    g.save();g.beginPath();g.rect(0,y,W,H);g.clip();
+    const gr=g.createLinearGradient(0,y,0,y+H);gr.addColorStop(0,gold[0]);gr.addColorStop(1,gold[1]);g.fillStyle=gr;g.fillRect(0,y,W,H);
+    for(let k=0;k<Math.floor(2200*W/4096);k++){g.fillStyle=`rgba(255,240,190,${rnd()*.18})`;g.fillRect(rnd()*W,y+rnd()*H,4,4)}
+    g.fillStyle='rgba(80,50,20,.6)';g.fillRect(0,y,W,4);g.fillRect(0,y+H-4,W,4);
+    if(text){g.fillStyle=ink;g.font=font;g.textBaseline='middle';
+      let fs=H*.62,tw,usedFont=font;const fitFont=()=>{g.font=usedFont=`bold ${fs}px "Times New Roman","Nimbus Roman","Liberation Serif","DejaVu Serif",Georgia,serif`;tw=g.measureText(text).width};
+      fitFont();if(tw>W*.98){fs*=W*.98/tw;fitFont()}
+      const maxSp=fit==='spread'?1e9:fs*.45,sp=Math.max(0,Math.min((W-tw)/Math.max(1,text.length),maxSp));
+      let x=fit==='left'?fs*.4:(W-(tw+sp*text.length))/2;
+      for(const ch of text){g.fillText(ch,x,y+H*.53);x+=g.measureText(ch).width+sp}}
+    g.restore()});
+  return c}
 // floor: white marble slabs (2 m) with thin grey joints
 export function floorBase(M){const S=1024,[c,g]=cv(S,S);
   for(let i=0;i<2;i++)for(let j=0;j<2;j++){g.save();g.beginPath();g.rect(i*S/2,j*S/2,S/2,S/2);g.clip();g.fillStyle=marble(g,M.white,1.6,(i+j)%2?90:0);g.fillRect(i*S/2,j*S/2,S/2,S/2);
