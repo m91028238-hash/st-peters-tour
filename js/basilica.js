@@ -71,7 +71,7 @@ export class Basilica{
      names.forEach((n,i)=>{if(ims[i])o[n]={t:T.tex(ims[i],{wrap:false}),p:P[n]||[.5,.5,.47,.47]}});this._smallDomes(o);}
     {const A={sacr:['alt_sacr.jpg',[0,0,1,1],[1.15,1.1,1.05]],greg:['alt_greg.jpg',[0,0,1,1]],clem:['alt_clem.jpg',[0,0,1,1]]},ks=Object.keys(A),ims=await Promise.all(ks.map(k=>L(A[k][0]))),o={};
      ks.forEach((k,i)=>{if(ims[i])o[k]={img:ims[i],crop:A[k][1],col:A[k][2]}});this._altars(o);}
-    {const A=['transfig','jerome','sebastian','baptism','leo','alex7','clem13','pius7'],ims=await Promise.all(A.map(k=>L('art_'+k+'.jpg'))),o={};A.forEach((k,i)=>{if(ims[i])o[k]=ims[i]});this._artworks(o);}
+    {const A=['transfig','jerome','sebastian','baptism','choir','present','leo','alex7','clem13','pius7'],ims=await Promise.all(A.map(k=>L('art_'+k+'.jpg'))),o={};A.forEach((k,i)=>{if(ims[i])o[k]=ims[i]});this._artworks(o);}
     this._dome(dome);this._apsePhoto(apse);this._entrance(entr);this._piers(panel);
     this._baldacchino();this._confessio();this._peter();
     this.onProgress('The statues…');
@@ -123,7 +123,7 @@ export class Basilica{
         // niche with a founder-saint statue between the pilasters (above the arcade, as in the nave piers)
         if(k>0&&k<4){const nm=m.travWarm;this.add(new THREE.CylinderGeometry(1.5,1.5,4.8,20,1,true,0,PI).rotateY(s>0?0:PI),nm).position.set(s*NHW,NY+2.4,zp);
           this.add(new THREE.SphereGeometry(1.5,20,8,PI/2,PI,0,PI/2).rotateY(s>0?0:PI),nm).position.set(s*NHW,NY+4.8,zp);
-          this.add(new THREE.PlaneGeometry(3,1.5).rotateX(-PI/2),nm).position.set(s*(NHW+.75),NY,zp);
+          this.add(new THREE.PlaneGeometry(1.5,3).rotateX(-PI/2),nm).position.set(s*(NHW+.75),NY,zp);
           this.box(.3,.3,3.4,s*(NHW-.1),NY-.15,zp,m.travWarm);this.add(new THREE.TorusGeometry(1.62,.1,6,24,PI).rotateY(PI/2),m.gold).position.set(s*(NHW-.02),NY+4.8,zp);
           (this.saintSpots=this.saintSpots||[]).push([V(s*(NHW+.2),NY,zp),s>0?-PI/2:PI/2])}}
       // entablature: architrave, inscribed frieze, cornice
@@ -165,9 +165,8 @@ export class Basilica{
           this.add(wallShape([[zc-5,0],[zc+5,0],[zc+5,18],[zc-5,18]],[],(a,y)=>V(s*x1,y,a)),m.travWarm);
           this.add(wallShape([[A1,zc-5],[x1,zc-5],[x1,zc+5],[A1,zc+5]],[ell(s*0+A1+dep/2,zc,3.9,3.9)],(a,b)=>V(s*a,18,b)),m.cofferRed);(this.domes=this.domes||[]).push({cx:s*(A1+dep/2),cz:zc,rx:3.9,rz:3.9,y:18,img:sacr?'sd_sacr.jpg':'sd_pieta.jpg'});
           for(const e of [-1,1])this.add(new THREE.PlaneGeometry(dep,5).translate(0,15.5,0),m.trav).position.set(s*(A1+dep/2),0,zc+e*5);
-        }else{ // shallow altar recess with a gilded frame and dark altarpiece (copies of paintings are mosaics in St Peter's)
-          this.add(new THREE.PlaneGeometry(10,13).translate(0,6.5,0).rotateY(s>0?-PI/2:PI/2),m.travWarm).position.set(s*x1,0,zc);
-          this.box(.2,7,4.4,s*(x1-.12),7,zc,m.gold);this.box(.25,6.4,3.8,s*(x1-.2),7,zc,new THREE.MeshStandardMaterial({color:0x3a2c22,roughness:.5}));
+        }else{ // shallow altar recess; its mosaic altarpiece and gilded frame (shaped to the picture) are added in _artworks
+          this.add(new THREE.PlaneGeometry(10,18).translate(0,9,0).rotateY(s>0?-PI/2:PI/2),m.travWarm).position.set(s*x1,0,zc);
           this.box(1.2,1.1,3.4,s*(x1-.7),.55,zc,m.marbleW,{cast:true});(this.recess=this.recess||[]).push({s,k,x:s*(x1-.34),z:zc,rot:s>0?-PI/2:PI/2});}
       });
       // coffered aisle ceiling opened by a small oval dome over every bay (as in the real aisles), and end walls
@@ -199,16 +198,25 @@ export class Basilica{
   _artworks(im){const m=this.mat,mk=(img,w,h)=>{const t=T.tex(img,{wrap:false});return new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshStandardMaterial({map:t,emissiveMap:t,emissive:new THREE.Color(.32,.3,.28),roughness:.55,color:new THREE.Color(1.05,1.03,1)}))};
     const fit=(img,W,H)=>{const a=img.width/img.height;return a>W/H?[W,W/a]:[H*a,H]};
     // aisle altars (mosaic copies of the paintings): left aisle Transfiguration (by the Clementine Chapel) and Baptism (Baptistery), right aisle St Jerome and St Sebastian
-    const R={transfig:[-1,0],baptism:[-1,3],jerome:[1,0],sebastian:[1,2]};
-    for(const k in R){const img=im[k];if(!img)continue;const r=(this.recess||[]).find(q=>q.s===R[k][0]&&q.k===R[k][1]);if(!r)continue;
-      const [w,h]=fit(img,3.8,6.4),o=mk(img,w,h);o.position.set(r.x,7-3.2+h/2,r.z);o.rotation.y=r.rot;this.s.add(o)}
+    // left aisle also has the Choir Chapel (Immaculate Conception) and the Chapel of the Presentation; arch = arched-top height as a fraction of the picture
+    const R={transfig:[-1,0,.229],choir:[-1,1,.316],present:[-1,2,.252],baptism:[-1,3,.317],jerome:[1,0,.299],sebastian:[1,2,.267]};
+    const arch=(w,h,a,e=0)=>{const ry=a*h+e,sh=new THREE.Shape();sh.moveTo(-w/2-e,-e);sh.lineTo(w/2+e,-e);sh.lineTo(w/2+e,h-a*h);sh.absellipse(0,h-a*h,w/2+e,ry,0,PI,false);sh.lineTo(-w/2-e,-e);return sh};
+    for(const k in R){const img=im[k],r=(this.recess||[]).find(q=>q.s===R[k][0]&&q.k===R[k][1]);if(!r)continue;
+      const g=new THREE.Group();g.position.set(r.x,0,r.z);g.rotation.y=r.rot;this.s.add(g);const y0=3.8;
+      if(!img){const b=new THREE.Mesh(new THREE.BoxGeometry(3.8,6.4,.25),new THREE.MeshStandardMaterial({color:0x3a2c22,roughness:.5}));b.position.set(0,7,-.14);g.add(b);continue}
+      const [w,h]=fit(img,3.8,6.6),a=R[k][2],geo=new THREE.ShapeGeometry(arch(w,h,a),24),P=geo.attributes.position,U=geo.attributes.uv;
+      for(let i=0;i<P.count;i++)U.setXY(i,P.getX(i)/w+.5,P.getY(i)/h);
+      const o=mk(img,1,1);o.geometry.dispose();o.geometry=geo;o.position.set(0,y0,.02);g.add(o);
+      const fs=arch(w,h,a,.22);fs.holes.push(arch(w,h,a,0));const fr=new THREE.Mesh(new THREE.ExtrudeGeometry(fs,{depth:.16,bevelEnabled:false,curveSegments:24}),m.gold);fr.position.set(0,y0,-.06);g.add(fr)}
     // monuments and relief altars as photographed panels set in marble surrounds
-    const wall=(k,x,z,rot,H,W=8)=>{const img=im[k];if(!img)return;const [w,h]=fit(img,W,H),g=new THREE.Group();g.position.set(x,0,z);g.rotation.y=rot;this.s.add(g);
-      const o=mk(img,w,h);o.position.set(0,.6+h/2,.08);g.add(o);
+    const wall=(k,x,z,rot,H,W=8,ar=0)=>{const img=im[k];if(!img)return;const [w,h]=fit(img,W,H),g=new THREE.Group();g.position.set(x,0,z);g.rotation.y=rot;this.s.add(g);
+      const o=mk(img,w,h);if(ar){const geo=new THREE.ShapeGeometry(arch(w,h,ar),24),P=geo.attributes.position,U=geo.attributes.uv;for(let i=0;i<P.count;i++)U.setXY(i,P.getX(i)/w+.5,P.getY(i)/h);geo.translate(0,-h/2,0);o.geometry.dispose();o.geometry=geo}
+      o.position.set(0,.6+h/2,.08);g.add(o);
       const f=(bw,bh,bx,by)=>{const b=new THREE.Mesh(new THREE.BoxGeometry(bw,bh,.35),m.travWarm);b.position.set(bx,by,.1);g.add(b)};
+      if(ar){const fs=arch(w,h,ar,.45);fs.holes.push(arch(w,h,ar,0));const fr=new THREE.Mesh(new THREE.ExtrudeGeometry(fs,{depth:.35,bevelEnabled:false,curveSegments:24}),m.travWarm);fr.position.set(0,.6,-.08);g.add(fr);f(w+.9,.6,0,.3);return}
       f(w+.9,.45,0,.6+h+.22);f(.45,h+.6,-(w/2+.22),.6+h/2);f(.45,h+.6,w/2+.22,.6+h/2);f(w+.9,.6,0,.3)};
     wall('alex7',-37.7,-12.95,0,9.5,6.4);       // Bernini, south (left) transept passage
-    wall('leo',-48.8,-12.95,0,8.6,5.4);         // Algardi's relief, Altar of St Leo the Great
+    wall('leo',-48.8,-12.95,0,8.6,5.4,.29);         // Algardi's relief, Altar of St Leo the Great
     wall('clem13',37.7,-12.95,0,10,6.4);        // Canova, north (right) transept passage
     wall('pius7',-30.95,25,PI/2,7.5,7);         // Thorvaldsen, Clementine Chapel
   }
@@ -492,14 +500,14 @@ export class Basilica{
   async _sculpt(k){this._sc=this._sc||{};if(this._sc[k])return this._sc[k];
     const {GLTFLoader,MeshoptDecoder}=await import('three');const lo=new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
     const dir=this.mobile?'assets/statues/lo/':'assets/statues/',tl=(f,srgb)=>T.loadImg(dir+f).then(im=>{if(!im)return null;const t=new THREE.Texture(im);t.flipY=false;t.colorSpace=srgb?THREE.SRGBColorSpace:THREE.NoColorSpace;t.anisotropy=4;t.needsUpdate=true;return t}).catch(()=>null);
-    const bronze=k==='peter'||k==='angel';
-    return this._sc[k]=Promise.all([lo.loadAsync(dir+k+'.glb'),tl(k+'_n.jpg',false),tl(k+'_ao.jpg',false),k==='peter'?tl(k+'_c.jpg',true):null]).then(([gl,n,ao,c])=>{
+    const bronze=k==='peter'||k==='angel',photo=k!=='angel'; // photo: colour map projected from real photographs (tools/photoproj)
+    return this._sc[k]=Promise.all([lo.loadAsync(dir+k+'.glb'),tl(k+'_n.jpg',false),tl(k+'_ao.jpg',false),photo?tl(k+'_c.jpg',true):null]).then(([gl,n,ao,c])=>{
       let node=null;gl.scene.updateMatrixWorld(true);gl.scene.traverse(o=>{if(o.isMesh&&!node)node=o});
       node.removeFromParent();node.matrix.copy(node.matrixWorld);node.matrix.decompose(node.position,node.quaternion,node.scale);
-      const opt={normalMap:n,normalScale:new THREE.Vector2(1,-1),aoMap:ao,aoMapIntensity:bronze?.9:.6};
-      const mat=k==='peter'?new THREE.MeshStandardMaterial({...opt,map:c,color:new THREE.Color(12,10.6,9.2),metalness:.3,roughness:.38,envMapIntensity:1.6})
+      const opt={normalMap:n,normalScale:new THREE.Vector2(1,-1),aoMap:ao,aoMapIntensity:bronze?.8:(c?.45:.6)};
+      const mat=k==='peter'?new THREE.MeshStandardMaterial({...opt,map:c,color:new THREE.Color(.95,.88,.8),metalness:.42,roughness:.42,envMapIntensity:1.3})
         :k==='angel'?new THREE.MeshStandardMaterial({...opt,color:0xe2b45c,metalness:.95,roughness:.3,envMapIntensity:1.4})
-        :new THREE.MeshStandardMaterial({...opt,color:0xf1ebdf,roughness:.46,metalness:0,envMapIntensity:.7,emissive:0x2a2620});
+        :new THREE.MeshStandardMaterial({...opt,...(c?{map:c,color:new THREE.Color(1.02,1.0,.97)}:{color:0xf1ebdf}),roughness:.46,metalness:0,envMapIntensity:.7,emissive:0x221f1a});
       node.material=mat;node.castShadow=!this.mobile;node.receiveShadow=true;const box=new THREE.Box3().setFromObject(node);return {node,box,mat}})}
   _place(r,parent,height,x0,y0,z0,rot=0,scl=0,cx=true){const b=r.box,s=scl||height/(b.max.y-b.min.y),o=new THREE.Group(),m=r.node.clone();o.add(m);
     o.scale.setScalar(s);o.position.set(x0-(cx?(b.min.x+b.max.x)/2*s:0),y0-b.min.y*s,z0);o.rotation.y=rot;parent.add(o);this.casters.push(m);return o}

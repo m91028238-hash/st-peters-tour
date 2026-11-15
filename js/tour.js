@@ -54,7 +54,7 @@ export class Tour{
     this._buildUI();this._bindInput();addEventListener('resize',()=>this.resize());this.resize();
     const loop=t=>{requestAnimationFrame(loop);this._tick(t)};requestAnimationFrame(loop);
   }
-  async init(){await this.basilica.build();this._envFromBasilica();this._hotspots();this.ready=true}
+  async init(){await this.basilica.build();this._envFromBasilica();this._hotspots();try{this._walkGrid()}catch(e){console.warn('walk grid',e)}this.ready=true}
   // image-based light baked from the finished interior (one cube render from the nave near the crossing), so marble and gilding reflect the real church
   _envFromBasilica(){try{const sc=this.scene,pm=new THREE.PMREMGenerator(this.renderer),old=sc.environment;sc.position.set(0,-9,-34);sc.updateMatrixWorld(true);
       const rt=pm.fromScene(sc,0.015,0.5,320);sc.position.set(0,0,0);sc.updateMatrixWorld(true);sc.environment=rt.texture;sc.environmentIntensity=this.mobile?.75:.85;old?.dispose?.();pm.dispose()}catch(e){console.warn('env',e)}}
@@ -80,7 +80,38 @@ export class Tour{
     for(const s of [-1,1])if(b(s*25-2.7,s*25+2.7,19,22))return true; // corner chapel altars
     if(b(D.AISLE1+5.6,D.AISLE1+10,archCentres[1]-3.8,archCentres[1]+3.8))return true; // Blessed Sacrament altar and railing
     return false}
-  ok(x,z){return this.inside(x,z)&&!this.blocked(x,z)}
+  // walkable floor taken from the built geometry: everything solid between ankle and head height (walls, piers, columns, altars, railings, pedestals)
+  // is sliced into a 20 cm grid, grown by the body radius, then flood-filled from the door so only floor inside the church is reachable
+  _walkGrid(){const t0=performance.now(),S=.2,X0=-72,Z0=-64,W=720,H=Math.ceil((D.ENTR+.2-Z0)/S),occ=new Uint8Array(W*H),ys=[.3,1,1.75];
+    const mark=(x,z)=>{const i=Math.floor((x-X0)/S),j=Math.floor((z-Z0)/S);if(i>=0&&j>=0&&i<W&&j<H)occ[j*W+i]=1};
+    const seg=(ax,az,bx,bz)=>{const n=Math.max(1,Math.ceil(Math.hypot(bx-ax,bz-az)/(S*.5)));for(let k=0;k<=n;k++)mark(ax+(bx-ax)*k/n,az+(bz-az)*k/n)};
+    const vis=o=>{for(let q=o;q;q=q.parent)if(!q.visible)return false;return true};
+    const a=new THREE.Vector3(),b=new THREE.Vector3(),c=new THREE.Vector3(),M=new THREE.Matrix4(),box=new THREE.Box3();let tris=0;
+    this.scene.updateMatrixWorld(true);
+    this.scene.traverse(o=>{if(!o.isMesh||!vis(o))return;const mt=Array.isArray(o.material)?o.material[0]:o.material;if(!mt||mt.depthWrite===false||mt.blending===THREE.AdditiveBlending||mt.opacity<.05)return;
+      const g=o.geometry,P=g.attributes.position;if(!P)return;if(!g.boundingBox)g.computeBoundingBox();const n=o.isInstancedMesh?o.count:1;
+      for(let q=0;q<n;q++){M.copy(o.matrixWorld);if(o.isInstancedMesh){const im=new THREE.Matrix4();o.getMatrixAt(q,im);M.multiply(im)}
+        box.copy(g.boundingBox).applyMatrix4(M);if(box.min.y>ys[2]||box.max.y<ys[0])continue;
+        const I=g.index,nt=(I?I.count:P.count)/3;
+        if(nt>20000){for(let x=box.min.x;x<=box.max.x;x+=S)for(let z=box.min.z;z<=box.max.z;z+=S)mark(x,z);continue} // detailed statues: their footprint
+        tris+=nt;
+        for(let t=0;t<nt;t++){const i0=I?I.getX(3*t):3*t,i1=I?I.getX(3*t+1):3*t+1,i2=I?I.getX(3*t+2):3*t+2;
+          a.fromBufferAttribute(P,i0).applyMatrix4(M);b.fromBufferAttribute(P,i1).applyMatrix4(M);c.fromBufferAttribute(P,i2).applyMatrix4(M);
+          const lo=Math.min(a.y,b.y,c.y),hi=Math.max(a.y,b.y,c.y);
+          for(const y of ys){if(y<lo||y>hi)continue;const p=[];for(const [u,v] of [[a,b],[b,c],[c,a]]){if((u.y-y)*(v.y-y)<=0&&u.y!==v.y){const f=(y-u.y)/(v.y-u.y);p.push(u.x+(v.x-u.x)*f,u.z+(v.z-u.z)*f)}}
+            if(p.length>=4)seg(p[0],p[1],p[2],p[3]);else if(p.length===2)mark(p[0],p[1])}}}});
+    // grow by the body radius (about 40 cm)
+    const R=2,dil=new Uint8Array(W*H);for(let j=0;j<H;j++)for(let i=0;i<W;i++)if(occ[j*W+i])for(let dj=-R;dj<=R;dj++)for(let di=-R;di<=R;di++){if(di*di+dj*dj>R*R+1)continue;const ii=i+di,jj=j+dj;if(ii>=0&&jj>=0&&ii<W&&jj<H)dil[jj*W+ii]=1}
+    // flood fill from the entrance; stop at the floor's edge so nobody can leave the building
+    const reach=new Uint8Array(W*H),st=[],seed=(x,z)=>{const i=Math.floor((x-X0)/S),j=Math.floor((z-Z0)/S),k=j*W+i;if(!dil[k]&&!reach[k]){reach[k]=1;st.push(k)}};
+    seed(this.walk.pos.x,this.walk.pos.z);let edge=false;
+    while(st.length){const k=st.pop(),i=k%W,j=(k-i)/W;if(i<=1||j<=1||i>=W-2||j>=H-2){edge=true;continue}
+      for(const d of [1,-1,W,-W]){const m=k+d;if(!dil[m]&&!reach[m]){reach[m]=1;st.push(m)}}}
+    let cnt=0;for(let k=0;k<W*H;k++)cnt+=reach[k];
+    this.grid={S,X0,Z0,W,H,reach,edge,cnt,tris,ms:Math.round(performance.now()-t0)};if(edge)console.warn('walk grid reached the floor edge');}
+  ok(x,z){const G=this.grid;if(!G||G.edge)return this.inside(x,z)&&!this.blocked(x,z);
+    const i=Math.floor((x-G.X0)/G.S),j=Math.floor((z-G.Z0)/G.S);if(i<0||j<0||i>=G.W||j>=G.H||!G.reach[j*G.W+i])return false;
+    return !this.blocked(x,z)}
   ceiling(x,z){if(Math.hypot(x,z)<21)return 105;if(Math.abs(x)<13||Math.abs(z)<13)return 32+Math.sqrt(Math.max(0,169-Math.min(x*x,z*z)));return 21}
   // ---------- UI: joystick, zoom, info points ----------
   _buildUI(){const h=this.host;
