@@ -1,0 +1,63 @@
+# Assets and licences
+
+Every image and model below (except the files under “Modelled for this tour”) was downloaded directly from Wikimedia Commons (no sign-in) and its licence was checked on the file page on 10 Nov 2026. Files were cropped, rectified, resized or recoloured for this tour; derivatives of CC BY-SA images are shared under the same licence. No Vatican virtual-tour imagery, vatican.va material or AI-generated sacred images are used.
+
+## Photographs
+- **Dome, drum, inscription frieze and pendentive mosaics** — “Vatikan Petersdom 045.jpg” by Burkhard Mücke, CC BY-SA 4.0. Projected onto the 3D dome with a fitted camera (assets/tex/dome.jpg). <https://commons.wikimedia.org/wiki/File:Vatikan_Petersdom_045.jpg>
+- **Apse wall with Bernini’s Cathedra Petri and the Gloria window** — “The Chair of Saint Peter adjusted.JPG” by Vitold Muratov, CC BY-SA 3.0 (assets/tex/apse.jpg). <https://commons.wikimedia.org/wiki/File:The_Chair_of_Saint_Peter_adjusted.JPG>
+- **Entrance wall, nave pier panels (putti and papal medallions) and vault coffer rosette** — “Nave of Saint Peter's Basilica, Ceiling.jpg” by Burkhard Mücke, CC BY-SA 4.0 (entrance.jpg, pier_panel.jpg, rosette.jpg). <https://commons.wikimedia.org/wiki/File:Nave_of_Saint_Peter%27s_Basilica,_Ceiling.jpg>
+- **Marble swatches for floor, walls and pedestals** — “Roma - St. Peters Basilika - Nave - Floor.jpg” by Dee.lite, CC BY-SA 4.0 (m_white, m_grey, m_brown, m_verde, m_giallo, m_red). <https://commons.wikimedia.org/wiki/File:Roma_-_St._Peters_Basilika_-_Nave_-_Floor.jpg>
+### Statue reference photographs (used only as modelling references; no pixels from them are shipped)
+- **Bronze statue of St Peter** — “St. Peter's Basilica, Bronze Statue of St. Peter (48466478846).jpg” by Gary Todd, public domain. <https://commons.wikimedia.org/wiki/File:St._Peter%27s_Basilica,_Bronze_Statue_of_St._Peter_(48466478846).jpg>
+- **St Longinus (Bernini)** — photo by Gary Todd, public domain. <https://commons.wikimedia.org/wiki/File:St._Peter%27s_Basilica,_Statue_of_St._Longinus,_the_Centurian_who_Pierced_Jesus%27_Side_with_a_Spear_(48466473841).jpg>
+- **St Helena (Andrea Bolgi)** — photo by Gary Todd, public domain. <https://commons.wikimedia.org/wiki/File:St._Peter%27s_Basilica,_Statue_of_St._Helena_by_Andrea_Bolgi_(48466447396).jpg>
+- **St Veronica (Francesco Mochi)** — photo by Gary Todd, public domain. <https://commons.wikimedia.org/wiki/File:St._Peter%27s_Basilica,_Statue_of_Saint_Veronica_by_Francesco_Mochi_(48466395626).jpg>
+- **St Andrew (François Duquesnoy)** — photo by Gary Todd, public domain. <https://commons.wikimedia.org/wiki/File:St._Peter%27s_Basilica,_Statue_of_St._Andrew_by_Francois_Duquesnoy,_1635_(48466391606).jpg>
+
+### Founder-saint statues in the nave (references)
+- **St Teresa of Ávila** — “Benfoto-Roma2013-324.jpg” by Ben Skála (Benfoto), CC BY-SA 3.0. <https://commons.wikimedia.org/wiki/File:Benfoto-Roma2013-324.jpg>
+- **St Vincent de Paul** — “Benfoto-Roma2013-323.jpg” by Ben Skála (Benfoto), CC BY-SA 3.0. <https://commons.wikimedia.org/wiki/File:Benfoto-Roma2013-323.jpg>
+- **St Philip Neri** — “Benfoto-Roma2013-317.jpg” by Ben Skála (Benfoto), CC BY-SA 3.0. <https://commons.wikimedia.org/wiki/File:Benfoto-Roma2013-317.jpg>
+- **St Ignatius of Loyola** — “Benfoto-Roma2013-304.jpg” by Ben Skála (Benfoto), CC BY-SA 3.0. <https://commons.wikimedia.org/wiki/File:Benfoto-Roma2013-304.jpg>
+- **St Francis of Paola** — “Benfoto-Roma2013-303.jpg” by Ben Skála (Benfoto), CC BY-SA 3.0. <https://commons.wikimedia.org/wiki/File:Benfoto-Roma2013-303.jpg>
+- **St Benedict** — “Statue of St. Benedict, (Benedict of Nursia, c. 480-547 AD), Founder of Benedictine Order (48466569337).jpg” by Gary Todd, public domain. <https://commons.wikimedia.org/wiki/File:Statue_of_St._Benedict,_(Benedict_of_Nursia,_c._480-547_AD),_Founder_of_Benedictine_Order_(48466569337).jpg>
+
+### Dome pendentives (near half)
+- **St Mark and St Matthew medallions** — “Benfoto-Roma2013-320.jpg” and “Benfoto-Roma2013-322.jpg” by Ben Skála (Benfoto), CC BY-SA 3.0 (ev_mark.jpg, ev_matthew.jpg). They replace the mirrored copies of St Luke and St John on the near pendentives, so all four Evangelists now appear once. <https://commons.wikimedia.org/wiki/File:Benfoto-Roma2013-320.jpg> <https://commons.wikimedia.org/wiki/File:Benfoto-Roma2013-322.jpg>
+
+### Small domes of the aisles and chapels
+- “Small dome of Saint Peter's Basilica photo-001.JPG” by AlfvanBeem, CC0 (aisle domes sd_aisle0–3, Pietà and Blessed Sacrament domes sd_pieta, sd_sacr). <https://commons.wikimedia.org/wiki/File:Small_dome_of_Saint_Peter%27s_Basilica_photo-001.JPG>
+- “Small dome of Saint Peter's Basilica photo-003.JPG” by AlfvanBeem, CC0 (aisle domes sd_aisle0–3, Pietà and Blessed Sacrament domes sd_pieta, sd_sacr). <https://commons.wikimedia.org/wiki/File:Small_dome_of_Saint_Peter%27s_Basilica_photo-003.JPG>
+- “Small dome of Saint Peter's Basilica photo-004.JPG” by AlfvanBeem, CC0 (aisle domes sd_aisle0–3, Pietà and Blessed Sacrament domes sd_pieta, sd_sacr). <https://commons.wikimedia.org/wiki/File:Small_dome_of_Saint_Peter%27s_Basilica_photo-004.JPG>
+- “Small dome of Saint Peter's Basilica photo-005.JPG” by AlfvanBeem, CC0 (aisle domes sd_aisle0–3, Pietà and Blessed Sacrament domes sd_pieta, sd_sacr). <https://commons.wikimedia.org/wiki/File:Small_dome_of_Saint_Peter%27s_Basilica_photo-005.JPG>
+- “Small dome of Saint Peter's Basilica photo-007.JPG” by AlfvanBeem, CC0 (aisle domes sd_aisle0–3, Pietà and Blessed Sacrament domes sd_pieta, sd_sacr). <https://commons.wikimedia.org/wiki/File:Small_dome_of_Saint_Peter%27s_Basilica_photo-007.JPG>
+- “Small dome of Saint Peter's Basilica photo-008.JPG” by AlfvanBeem, CC0 (aisle domes sd_aisle0–3, Pietà and Blessed Sacrament domes sd_pieta, sd_sacr). <https://commons.wikimedia.org/wiki/File:Small_dome_of_Saint_Peter%27s_Basilica_photo-008.JPG>
+- **Gregorian Chapel dome** — “Vatican City, December 2023 IMG 6847 (54184059167).jpg” by Brian Jeffery Beggerly, CC BY 2.0 (sd_greg.jpg). <https://commons.wikimedia.org/wiki/File:Vatican_City,_December_2023_IMG_6847_(54184059167).jpg>
+- **Clementine Chapel dome** — “Basílica de San Pedro, Ciudad del Vaticano, 2022-09-17, DD 21-23 HDR.jpg” by Diego Delso, CC BY-SA 4.0 (sd_clem.jpg). <https://commons.wikimedia.org/wiki/File:Bas%C3%ADlica_de_San_Pedro,_Ciudad_del_Vaticano,_2022-09-17,_DD_21-23_HDR.jpg>
+
+### Chapel altarpieces (cropped)
+- **Chapel of the Blessed Sacrament** (tabernacle and the lower part of Pietro da Cortona’s Trinity) — “Vatikan Petersdom 073.jpg” by Burkhard Mücke, CC BY-SA 4.0 (alt_sacr.jpg). <https://commons.wikimedia.org/wiki/File:Vatikan_Petersdom_073.jpg>
+- **Gregorian Chapel, altar of Our Lady of Succour** — “Altar of Our Lady of Succour.jpg” by Cristian Bortes, CC BY 2.0 (alt_greg.jpg). <https://commons.wikimedia.org/wiki/File:Altar_of_Our_Lady_of_Succour.jpg>
+- **Clementine Chapel, altar of St Gregory the Great** — “Pisos y techos en el Vaticano 47.jpg” by Álvaro de la Paz Franco, CC0 (alt_clem.jpg). <https://commons.wikimedia.org/wiki/File:Pisos_y_techos_en_el_Vaticano_47.jpg>
+
+### Altar mosaics and papal monuments (v4, photo panels placed at their real positions; assets/tex/art_*.jpg)
+- **Left aisle, Clementine side: altar of the Transfiguration (mosaic copy of Raphael)** — “Images from Roma Project 23443 15.jpg” by Wilfredor, CC0 (art_transfig.jpg). <https://commons.wikimedia.org/wiki/File:Images_from_Roma_Project_23443_15.jpg>
+- **Baptistery chapel, left aisle: Baptism of Christ (mosaic after Carlo Maratta)** — “Jesus' Baptism in St. Peter's Basilica.jpg” by Burkhard Mücke, CC BY-SA 4.0 (art_baptism.jpg). <https://commons.wikimedia.org/wiki/File:Jesus%27_Baptism_in_St._Peter%27s_Basilica.jpg>
+- **Right aisle by the Gregorian Chapel: altar of St Jerome (mosaic after Domenichino)** — “Altar of St. Jerome (cropped).JPG” by AlfvanBeem, CC0 (art_jerome.jpg). <https://commons.wikimedia.org/wiki/File:Altar_of_St._Jerome_(cropped).JPG>
+- **Right aisle, Chapel of St Sebastian: Martyrdom of St Sebastian (mosaic after Domenichino)** — “Saint Peter's Basilica Saint Sebastian chapel 2020 P01 Martyrdom of Saint Sebastian.jpg” by Fallaner, CC BY-SA 4.0 (art_sebastian.jpg). <https://commons.wikimedia.org/wiki/File:Saint_Peter%27s_Basilica_Saint_Sebastian_chapel_2020_P01_Martyrdom_of_Saint_Sebastian.jpg>
+- **Left transept/apse corridor: Bernini’s tomb of Pope Alexander VII** — “0 Monument funéraire du pape Alexandre VII - St-Pierre - Vatican (1) brighter.jpg” by Jean-Pol GRANDMONT, CC BY 3.0 (art_alex7.jpg). <https://commons.wikimedia.org/wiki/File:0_Monument_fun%C3%A9raire_du_pape_Alexandre_VII_-_St-Pierre_-_Vatican_(1)_brighter.jpg>
+- **Left of the apse: Algardi’s relief of Pope Leo the Great and Attila** — “Altar of Saint Leo the Great in Saint Peter's Basilica 2.jpg” by Wilfredor, CC0 (art_leo.jpg). <https://commons.wikimedia.org/wiki/File:Altar_of_Saint_Leo_the_Great_in_Saint_Peter%27s_Basilica_2.jpg>
+- **Right transept side: Canova’s monument to Pope Clement XIII** — “St. Peter's Basilica, Monument to Pope Clement XIII, by Antonio Canova, 1792 (48466617492).jpg” by Gary Todd from Xinzheng, China, Public domain (art_clem13.jpg). <https://commons.wikimedia.org/wiki/File:St._Peter%27s_Basilica,_Monument_to_Pope_Clement_XIII,_by_Antonio_Canova,_1792_(48466617492).jpg>
+- **Clementine Chapel: Thorvaldsen’s monument to Pope Pius VII** — “St. Peter's Basilica, Monument to Pope Pius VII (48466729907).jpg” by Gary Todd from Xinzheng, China, Public domain (art_pius7.jpg). <https://commons.wikimedia.org/wiki/File:St._Peter%27s_Basilica,_Monument_to_Pope_Pius_VII_(48466729907).jpg>
+
+## 3D model
+- **Michelangelo’s Pietà** — 3D scan of the plaster cast KAS115 at Statens Museum for Kunst, Copenhagen: “Michelangelo Buonarroti, Maria med den døde Jesus, Peterskirkepietà, KAS115, Statens Museum for Kunst, 3D model.stl”, public domain. Decimated from 1.5 M to 70,000 triangles and converted to GLB (assets/models/pieta.glb). <https://commons.wikimedia.org/wiki/File:Michelangelo_Buonarroti,_Maria_med_den_d%C3%B8de_Jesus,_Peterskirkepiet%C3%A0,_,_KAS115,_Statens_Museum_for_Kunst,_3D_model.stl>
+
+## Modelled for this tour (no outside assets)
+- **Architecture, baldacchino with its winged angels, Papal Altar, Confessio, crossing-pier loggias (Solomonic columns, balconies, carved relief panels), chapel aedicules, altars, candlesticks and railings** — geometry written in code (js/basilica.js); textures drawn at runtime from the marble swatches above (js/textures.js). Latin frieze text is Matthew 16:18–19 (Vulgate), public domain.
+- **Statues: bronze St Peter, St Longinus, St Helena, St Veronica, St Andrew, the six nave founder saints and the baldacchino angels** (assets/statues/*.glb, *_n.jpg, *_ao.jpg, peter_c.jpg; lighter mobile versions in assets/statues/lo/) — modelled for this tour from scratch. No open-licence, sign-in-free 3D scans of these works were found, so each figure was sculpted procedurally as a signed-distance model (tools/sculpt: anatomy, faces, hair and beards, hands, drapery folds, attributes such as the keys, spear, cross, veil, X-cross, books and staffs), posed by eye from the reference photographs listed above (v4: founders re-posed with contrapposto, corrected hand attributes, mantles, and their real companion figures — the putti beside St Teresa, St Philip Neri and St Benedict and the trampled figure of Heresy under St Ignatius, all modelled from scratch; faces refined with lids, brows and lip structure), meshed with marching cubes, decimated in Blender 4.2 (GPL, used as a tool only) and given its own baked tangent-space normal map and ambient-occlusion map (plus a patina/wear colour map for the bronze St Peter). Compressed with meshopt (gltf-transform, MIT). These files are original work for this tour.
+- The earlier photo-relief proxies and painted-out photo backdrops (assets/statues/*.bin, *_a.png, *_bg.jpg and the statue photos) were removed; the crossing niches are now marble shells and St Peter sits on a modelled marble throne in front of a red-and-gold brocade panel drawn in code.
+
+## Software
+- **three.js r170** — MIT licence (vendor/THREE-LICENSE.txt), bundled with its GLTFLoader, MeshoptDecoder, RoomEnvironment and bloom post-processing. <https://github.com/mrdoob/three.js>
+- **Walk/free-camera controls** — adapted from “Checkmate in the Sistine” (same author’s game). <https://github.com/m91028238-hash/catholic-chess>

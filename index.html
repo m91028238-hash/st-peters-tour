@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<link rel="icon" href="data:,">
+<meta name="theme-color" content="#2a1a10">
+<meta name="description" content="Walk through St Peter’s Basilica in 3D: Michelangelo’s dome, Bernini’s baldacchino and Chair of St Peter, the Pietà and the tomb of St Peter.">
+<title>St Peter’s Basilica: a walking tour</title>
+<link rel="stylesheet" href="css/style.css?v=1">
+<script type="importmap">{"imports":{"three":"./vendor/three.bundle.min.js?v=1"}}</script>
+</head>
+<body>
+<div id="app">
+  <header id="top">
+    <button id="menuBtn" aria-label="Menu">☰</button>
+    <div class="tx"><div id="obj">St Peter’s Basilica</div><div id="status">Loading…</div></div>
+    <button id="modeBtn" aria-label="Camera mode">Walk</button>
+    <button id="fsBtn" aria-label="Full screen" title="Full screen">⛶</button>
+  </header>
+  <main id="stage"><div id="places" class="artui"></div><div id="loading"><div class="lt">Entering St Peter’s…</div><div class="bar"><i></i></div></div></main>
+  <div id="info" class="info" hidden><button class="x" aria-label="Close">✕</button><h2></h2><p></p></div>
+</div>
+<div id="menu">
+  <div class="mwrap">
+    <a class="home" href="https://m91028238-hash.github.io/catholic-mini-games/">‹ Catholic Games</a>
+    <h1>St Peter’s Basilica</h1>
+    <p class="sub">A 3D walking tour of the greatest church of Christendom, built over the tomb of the Apostle Peter on the Vatican Hill.</p>
+    <p class="sub">Use the ring at the bottom left to walk, drag anywhere else to look around and up into the dome, and pinch or use + and − to zoom. Tap a gold <b>i</b> to read about each work, or use the buttons along the top to walk straight to it. “Walk” switches to a free camera that circles the work you are looking at.</p>
+    <div class="row big"><button id="mStart">Enter the basilica</button></div>
+    <details class="credits"><summary>Image and model credits</summary><div id="credits"></div></details>
+    <p class="sub small">Architecture is modelled approximately to true scale (nave about 186 m long, dome 41.5 m across). Photographs are openly licensed from Wikimedia Commons; see credits.</p>
+  </div>
+</div>
+<script type="module" src="js/main.js?v=1"></script>
+</body>
+</html>
