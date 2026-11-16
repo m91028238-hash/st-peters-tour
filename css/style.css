@@ -16,6 +16,8 @@ button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulatio
 #loading .bar i{display:block;height:100%;width:0;background:#ffd98a;transition:width .4s}
 .zoomui{position:absolute;right:8px;bottom:12px;display:flex;flex-direction:column;gap:8px;z-index:5}
 .zoomui button{width:48px;height:48px;border-radius:10px;border:1px solid rgba(201,168,108,.6);background:rgba(42,26,16,.78);color:#ffe2a6;font-size:1.4rem;line-height:1}
+.zoomui button.spd{height:40px;font-size:.82rem;letter-spacing:.02em}
+.zoomui button.on{background:#8a6232;color:#fff8e8;border-color:#ffe2a6}
 .artui{position:absolute;left:8px;right:8px;top:8px;display:flex;gap:6px;overflow-x:auto;z-index:5;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding:1px}
 .artui::-webkit-scrollbar{display:none}
 .artui button{flex:0 0 auto;white-space:nowrap;font-size:.78rem;min-height:40px;padding:6px 12px;border-radius:20px;border:1px solid rgba(201,168,108,.42);background:rgba(42,26,16,.66);color:#efd9a8;line-height:1.1}

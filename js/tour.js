@@ -2,14 +2,14 @@
 // The walk/free-cam controls are carried over from "Checkmate in the Sistine" (same eye height, joystick and gestures).
 import * as THREE from 'three';
 import { RoomEnvironment, EffectComposer, RenderPass, UnrealBloomPass, OutputPass } from 'three';
-import { Basilica, D, archCentres } from './basilica.js?v=51';
-import { tex, hotspot } from './textures.js?v=51';
+import { Basilica, D, archCentres } from './basilica.js?v=52';
+import { tex, hotspot } from './textures.js?v=52';
 const EYE=2.05; // adult eye height, metres (as in the chapel game)
 const easeIO=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
 export const PLACES=[ // id, name, where to stand, what to look at, info point position
   {id:'entrance',name:'Nave',stand:[0,118],look:[0,14,0],hot:[0,3.2,112],title:'The nave',
    text:'The nave stretches about 186 metres from the entrance to the apse, making St Peter’s one of the largest churches in the world. Carlo Maderno lengthened Michelangelo’s Greek-cross plan into this Latin cross between 1607 and 1615, and the gilded coffered vault rises about 46 metres above the floor. Near the central door lies the red porphyry disc on which, by tradition, Charlemagne knelt to be crowned emperor by Pope Leo III on Christmas Day in the year 800.'},
-  {id:'dome',name:'Dome',stand:[0,9.2],look:[0,100,-1],hot:[0,52,-8],title:'Michelangelo’s dome',
+  {id:'dome',name:'Dome',stand:[0,18],look:[0,100,-1],hot:[0,52,-8],title:'Michelangelo’s dome',
    text:'Michelangelo designed the great dome, and Giacomo della Porta and Domenico Fontana completed it in 1590. It is about 41.5 metres across inside, and its lantern rises about 117 metres above the floor. Around its base, gold mosaic letters nearly two metres high carry Christ’s words to Peter: “Tu es Petrus”, “You are Peter, and on this rock I will build my Church.”'},
   {id:'baldacchino',name:'Baldacchino',stand:[-9,24],look:[0,14,0],hot:[-4.5,8,12],title:'Bernini’s baldacchino',
    text:'Gian Lorenzo Bernini made this bronze canopy between 1623 and 1634 for Pope Urban VIII. It rises about 29 metres over the Papal Altar, and its four twisted columns recall the ancient spiral columns of Old St Peter’s, which tradition linked to the Temple in Jerusalem. Only the Pope, or a priest he delegates, celebrates Mass at this altar.'},
@@ -50,11 +50,12 @@ export class Tour{
     this.bloom=new UnrealBloomPass(new THREE.Vector2(256,256),.4,.5,1.0);this.composer.addPass(this.bloom);this.composer.addPass(new OutputPass());
     this.basilica=new Basilica(sc,r,{mobile,onProgress:s=>this.onStatus(s)});
     this.walk={pos:P2(0,118),vel:new THREE.Vector3(),yaw:0,yawT:0,pitch:.08,pitchT:.08,fov:70,fovTo:70,phase:0,glide:null};
+    this.speedMul=6;
     this.mode='Walk';this.keys=new Set();this.joy={x:0,y:0,id:null};this.look={};this.ray=new THREE.Raycaster();
     this._buildUI();this._bindInput();addEventListener('resize',()=>this.resize());this.resize();
     const loop=t=>{requestAnimationFrame(loop);this._tick(t)};requestAnimationFrame(loop);
   }
-  async init(){await this.basilica.build();this._envFromBasilica();this._hotspots();try{this._walkGrid()}catch(e){console.warn('walk grid',e)}this.ready=true}
+  async init(){await this.basilica.build();this._envFromBasilica();this._hotspots();try{this._walkGrid()}catch(e){console.warn('walk grid',e)}this._seatPlaces();this.ready=true}
   // image-based light baked from the finished interior (one cube render from the nave near the crossing), so marble and gilding reflect the real church
   _envFromBasilica(){try{const sc=this.scene,pm=new THREE.PMREMGenerator(this.renderer),old=sc.environment;sc.position.set(0,-9,-34);sc.updateMatrixWorld(true);
       const rt=pm.fromScene(sc,0.015,0.5,320);sc.position.set(0,0,0);sc.updateMatrixWorld(true);sc.environment=rt.texture;sc.environmentIntensity=this.mobile?.75:.85;old?.dispose?.();pm.dispose()}catch(e){console.warn('env',e)}}
@@ -112,11 +113,23 @@ export class Tour{
   ok(x,z){const G=this.grid;if(!G||G.edge)return this.inside(x,z)&&!this.blocked(x,z);
     const i=Math.floor((x-G.X0)/G.S),j=Math.floor((z-G.Z0)/G.S);if(i<0||j<0||i>=G.W||j>=G.H||!G.reach[j*G.W+i])return false;
     return !this.blocked(x,z)}
+  // nearest cell a pilgrim can actually stand on (used when a glide ends inside a balustrade or pier)
+  _nearestOk(x,z){if(this.ok(x,z))return {x,z};const G=this.grid;
+    if(G&&!G.edge){const i0=Math.floor((x-G.X0)/G.S),j0=Math.floor((z-G.Z0)/G.S);
+      for(let r=1;r<=56;r++){let best=null,bd=1e9;for(let dj=-r;dj<=r;dj++)for(let di=-r;di<=r;di++){if(Math.max(Math.abs(di),Math.abs(dj))!==r)continue;
+        const i=i0+di,j=j0+dj;if(i<1||j<1||i>=G.W-1||j>=G.H-1)continue;if(!G.reach[j*G.W+i])continue;
+        const cx=G.X0+(i+.5)*G.S,cz=G.Z0+(j+.5)*G.S;if(this.blocked(cx,cz))continue;const d=(cx-x)**2+(cz-z)**2;if(d<bd){bd=d;best={x:cx,z:cz}}}
+        if(best)return best}}
+    for(let r=1;r<=36;r++)for(let k=0;k<20;k++){const a=k/20*Math.PI*2,cx=x+Math.cos(a)*r*.45,cz=z+Math.sin(a)*r*.45;if(this.ok(cx,cz))return {x:cx,z:cz}}
+    return null}
+  _unstick(w){if(this.ok(w.pos.x,w.pos.z))return;const n=this._nearestOk(w.pos.x,w.pos.z);if(!n)return;w.pos.x=n.x;w.pos.z=n.z;w.vel.set(0,0,0)}
+  // every place button must finish on a walkable cell, never inside the confessio or a pier
+  _seatPlaces(){for(const p of PLACES){if(this.ok(p.stand[0],p.stand[1]))continue;const n=this._nearestOk(p.stand[0],p.stand[1]);if(n)p.stand=[n.x,n.z]}}
   ceiling(x,z){if(Math.hypot(x,z)<21)return 105;if(Math.abs(x)<13||Math.abs(z)<13)return 32+Math.sqrt(Math.max(0,169-Math.min(x*x,z*z)));return 21}
   // ---------- UI: joystick, zoom, info points ----------
   _buildUI(){const h=this.host;
-    const z=this.zoomUI=document.createElement('div');z.className='zoomui';z.innerHTML='<button aria-label="Zoom in" data-z="0.7">+</button><button aria-label="Zoom out" data-z="1.43">−</button>';
-    z.addEventListener('click',e=>{const b=e.target.closest('button');if(b)this.zoom(+b.dataset.z)});h.appendChild(z);
+    const z=this.zoomUI=document.createElement('div');z.className='zoomui';z.innerHTML='<button aria-label="Zoom in" data-z="0.7">+</button><button aria-label="Zoom out" data-z="1.43">−</button><button class="spd" data-s="1" aria-label="Walk speed 1 times">1×</button><button class="spd" data-s="3" aria-label="Walk speed 3 times">3×</button><button class="spd" data-s="6" aria-label="Walk speed 6 times">6×</button>';
+    z.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.z)this.zoom(+b.dataset.z);else if(b.dataset.s)this.setSpeed(+b.dataset.s)});h.appendChild(z);
     const j=this.joyUI=document.createElement('div');j.className='joy';j.innerHTML='<div class="knob"></div>';h.appendChild(j);
     const J=this.joy,R=70,knob=j.firstChild;
     const setK=(dx,dy)=>{const l=Math.hypot(dx,dy),s=l>R?R/l:1;dx*=s;dy*=s;knob.style.transform=`translate(${dx}px,${dy}px)`;let x=dx/R,y=dy/R;const m=Math.hypot(x,y);if(m<.15){x=y=0}else{const k=(m-.15)/.85/m;x*=k;y*=k}J.x=x;J.y=y};
@@ -124,8 +137,9 @@ export class Tour{
     j.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();if(J.id!=null&&J.id!==e.pointerId)return;try{j.setPointerCapture(e.pointerId)}catch(_){}J.id=e.pointerId;centre();setK(e.clientX-J.cx,e.clientY-J.cy);this.walk.glide=null});
     j.addEventListener('pointermove',e=>{if(e.pointerId===J.id){e.preventDefault();setK(e.clientX-J.cx,e.clientY-J.cy)}});
     const end=e=>{if(e.pointerId!==J.id)return;J.id=null;setK(0,0)};['pointerup','pointercancel','lostpointercapture'].forEach(t=>j.addEventListener(t,end));
-    j.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});this.resetJoy=()=>{J.id=null;setK(0,0)};
+    j.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});this.resetJoy=()=>{J.id=null;setK(0,0)};this.setSpeed(6);
   }
+  setSpeed(m){this.speedMul=m;[...this.zoomUI.querySelectorAll('[data-s]')].forEach(b=>b.classList.toggle('on',+b.dataset.s===m))}
   _hotspots(){const m=new THREE.SpriteMaterial({map:tex(hotspot()),depthTest:false,transparent:true,toneMapped:false});this.hots=[];
     for(const p of PLACES){const s=new THREE.Sprite(m);s.position.set(...p.hot);s.scale.set(1,1,1);s.renderOrder=10;s.userData.place=p.id;this.scene.add(s);this.hots.push(s)}}
   zoom(f){if(this.mode==='Free')return this._dolly(f);this.walk.fovTo=THREE.MathUtils.clamp(this.walk.fovTo*f,15,75)}
@@ -150,14 +164,20 @@ export class Tour{
   _walkStep(now,dt){const w=this.walk,c=this.camera;
     if(w.glide){const g=w.glide,t=Math.min(1,Math.max(0,(now-g.t0)/g.dur)),e=easeIO(t),s=e*g.len;let i=1;while(i<g.L.length-1&&g.L[i]<s)i++;
       const seg=g.L[i]-g.L[i-1]||1;w.pos.lerpVectors(g.path[i-1],g.path[i],Math.min(1,(s-g.L[i-1])/seg));w.yawT=g.y0+(g.y1-g.y0)*e;w.pitchT=g.p0+(g.p1-g.p0)*e;w.fovTo=g.f0+(g.f1-g.f0)*e;w.vel.set(0,0,0);if(t>=1)w.glide=null}
+    if(!w.glide&&!this.ok(w.pos.x,w.pos.z))this._unstick(w);
     const K=this.keys,has=(...a)=>a.some(k=>K.has(k));
     let ix=this.joy.x+(has('KeyD','ArrowRight')?1:0)-(has('KeyA','ArrowLeft')?1:0),iz=this.joy.y+(has('KeyS','ArrowDown')?1:0)-(has('KeyW','ArrowUp')?1:0);const il=Math.hypot(ix,iz);if(il>1){ix/=il;iz/=il}
     if(il>.01)w.glide=null;
-    if(!w.glide){const sp=4.6*(has('ShiftLeft','ShiftRight')?2.5:1),sy=Math.sin(w.yaw),cy=Math.cos(w.yaw),tx=(cy*ix+sy*iz)*sp,tz=(-sy*ix+cy*iz)*sp,k=1-Math.exp(-dt*9);
-      w.vel.x+=(tx-w.vel.x)*k;w.vel.z+=(tz-w.vel.z)*k;const nx=w.pos.x+w.vel.x*dt,nz=w.pos.z+w.vel.z*dt;
-      if(this.ok(nx,nz)){w.pos.x=nx;w.pos.z=nz}else if(this.ok(nx,w.pos.z)){w.pos.x=nx;w.vel.z*=.5}else if(this.ok(w.pos.x,nz)){w.pos.z=nz;w.vel.x*=.5}else w.vel.set(0,0,0)}
+    if(!w.glide){const mul=this.speedMul||6,sp=4.6*mul*(has('ShiftLeft','ShiftRight')?2:1),sy=Math.sin(w.yaw),cy=Math.cos(w.yaw),tx=(cy*ix+sy*iz)*sp,tz=(-sy*ix+cy*iz)*sp,k=1-Math.exp(-dt*9);
+      w.vel.x+=(tx-w.vel.x)*k;w.vel.z+=(tz-w.vel.z)*k;
+      const dist=Math.hypot(w.vel.x,w.vel.z)*dt,n=Math.max(1,Math.ceil(dist/.5)),sx=w.vel.x*dt/n,sz=w.vel.z*dt/n;
+      for(let s=0;s<n;s++){const nx=w.pos.x+sx,nz=w.pos.z+sz;
+        if(this.ok(nx,nz)){w.pos.x=nx;w.pos.z=nz}
+        else if(this.ok(nx,w.pos.z)){w.pos.x=nx;w.vel.z*=.5;break}
+        else if(this.ok(w.pos.x,nz)){w.pos.z=nz;w.vel.x*=.5;break}
+        else{const near=this._nearestOk(w.pos.x,w.pos.z);if(near){const d0=(w.pos.x-near.x)**2+(w.pos.z-near.z)**2,d1=(nx-near.x)**2+(nz-near.z)**2;if(d1<d0-1e-4){w.pos.x=nx;w.pos.z=nz;continue}}w.vel.set(0,0,0);break}}}
     const lk=1-Math.exp(-dt*20);w.yaw+=(w.yawT-w.yaw)*lk;w.pitch+=(w.pitchT-w.pitch)*lk;w.fov+=(w.fovTo-w.fov)*(1-Math.exp(-dt*12));
-    const spd=Math.hypot(w.vel.x,w.vel.z),amt=Math.min(1,spd/4.6);w.phase+=dt*spd*1.9;
+    const spd=Math.hypot(w.vel.x,w.vel.z),base=4.6*(this.speedMul||6),amt=Math.min(.65,spd/base);w.phase+=dt*(spd/base)*4.6*1.15;
     c.position.set(w.pos.x,EYE+Math.sin(w.phase*2)*.025*amt,w.pos.z);c.rotation.set(w.pitch,w.yaw,0,'YXZ');if(Math.abs(c.fov-w.fov)>.01){c.fov=w.fov;c.updateProjectionMatrix()}
     this._where()}
   _where(){const p=this.walk.pos;let n='The nave';if(p.z<D.PIER&&p.z>-D.PIER&&Math.abs(p.x)<D.PIER)n='Under the dome';else if(p.z<-D.PIER)n='The apse';else if(Math.abs(p.x)>D.PIER&&p.z<D.PIER)n='The transept';else if(Math.abs(p.x)>D.NHW)n=p.x>0&&p.z>100?'The Pietà chapel':'The side aisle';

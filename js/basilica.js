@@ -1,6 +1,6 @@
 // St Peter's Basilica interior, in metres. Origin: centre of the crossing at floor level; +z towards the entrance, -z towards the apse.
 import * as THREE from 'three';
-import * as T from './textures.js?v=51';
+import * as T from './textures.js?v=52';
 const V=(x,y,z)=>new THREE.Vector3(x,y,z),PI=Math.PI;
 export const D={NHW:13,ENTR:126,CROSS:20.75,PIER:31,BAY:23.75,ARCH_HW:6.5,ARCH_SPR:15,SPR:33.5,DOME_R:20.75,APSE_C:-47,TRANS_C:55.5,AISLE0:19,AISLE1:31,AISLE_H:22};
 export const archCentres=[0,1,2,3].map(k=>D.PIER+D.BAY*(k+.5));
@@ -82,7 +82,7 @@ export class Basilica{
     {const A={sacr:['alt_sacr.jpg',[0,0,1,1],[1.15,1.1,1.05]],greg:['alt_greg.jpg',[0,0,1,1]],clem:['alt_clem.jpg',[0,0,1,1]]},ks=Object.keys(A),ims=await Promise.all(ks.map(k=>L(A[k][0]))),o={};
      ks.forEach((k,i)=>{if(ims[i])o[k]={img:ims[i],crop:A[k][1],col:A[k][2]}});this._altars(o);}
     {const A=['transfig','jerome','sebastian','baptism','choir','present','leo','alex7','clem13','pius7'],ims=await Promise.all(A.map(k=>L('art_'+k+'.jpg'))),o={};A.forEach((k,i)=>{if(ims[i])o[k]=ims[i]});this._artworks(o);}
-    this._dome(dome);this._apsePhoto(apse);this._entrance(entr);this._piers(panel);
+    this._dome(dome);this._apsePhoto(apse);this._entrance();this._piers(panel);
     this._baldacchino();this._confessio();this._peter();
     this.onProgress('The statues…');
     await Promise.all([this._statues(),this._saints()]);
@@ -113,6 +113,15 @@ export class Basilica{
   // map a 0–1 uv mesh onto one row of the inscription atlas (optional u-range for a continuous run)
   _friezeUV(geo,row,u0=0,u1=1,flipU=false){const U=geo.attributes.uv,n=this.friezeN,v0=(n-row-1)/n,v1=(n-row)/n,pad=(v1-v0)*.08;
     for(let i=0;i<U.count;i++){const u=U.getX(i),v=U.getY(i);U.setXY(i,u0+(flipU?1-u:u)*(u1-u0),v0+pad+v*(v1-v0-2*pad))}U.needsUpdate=true;return geo}
+  // semicircular barrel: spring line on the entablature (y = SPR), coffers locked to the bay module
+  _barrelGeo(z0,z1){const {NHW,SPR,PIER,BAY}=D,R=NHW-.05,y0=SPR;
+    const g=surf((u,v)=>V(Math.cos(u*PI)*R,y0+Math.sin(u*PI)*R,z0+v*(z1-z0)),64,56);
+    const P=g.attributes.position,U=g.attributes.uv,mod=BAY/4;
+    for(let i=0;i<P.count;i++){const x=P.getX(i),z=P.getZ(i),u=Math.acos(Math.max(-1,Math.min(1,x/R)))/PI;U.setXY(i,u*4,(z-PIER)/mod/2)}
+    U.needsUpdate=true;g.computeVertexNormals();return g}
+  _vaultRib(z){const {NHW,SPR}=D,R=NHW-.32,y0=SPR,h=.72;
+    const g=surf((u,v)=>V(Math.cos(u*PI)*R,y0+Math.sin(u*PI)*R,z-h+v*2*h),64,2);
+    const U=g.attributes.uv;for(let i=0;i<U.count;i++)U.setXY(i,U.getX(i)*4,.028+U.getY(i)*.05);U.needsUpdate=true;return g}
   // ---------- nave: arcades, pilasters, entablature, coffered barrel vault, lunette windows ----------
   _nave(){const {NHW,ENTR,PIER,SPR,ARCH_HW,ARCH_SPR}=D,m=this.mat,NY=9.6;
     for(const s of [-1,1]){
@@ -145,14 +154,13 @@ export class Basilica{
       fr.rotation.y=s>0?-PI/2:PI/2;fr.position.set(s*(NHW-1.21),30.3,(ENTR+PIER)/2);
       this.box(1.25,.1,ENTR-PIER,s*(NHW-.6),29.4,(ENTR+PIER)/2,m.gold);
       this.box(2.0,1.4,ENTR-PIER,s*(NHW-1.0),32.4,(ENTR+PIER)/2,m.travWarm,{cast:false});
-      this.box(2.3,.25,ENTR-PIER,s*(NHW-1.15),33.2,(ENTR+PIER)/2,m.gold);
+      this.box(2.3,.4,ENTR-PIER,s*(NHW-1.15),33.3,(ENTR+PIER)/2,m.gold);
       // lunette windows in the vault above each bay
       for(const zc of archCentres)this._window(V(s*(NHW-.8),31.2+2.6,zc),5,5.2,s>0?-PI/2:PI/2,true);
     }
-    // the barrel vault (radius 13, crown 46.5 m), 6 coffers round the arc
-    const len=ENTR-PIER;this.add(surf((u,v)=>V(Math.cos(u*PI)*NHW,SPR+Math.sin(u*PI)*NHW,PIER+v*len),48,48,4,len/10.2),m.coffer);
-    // transverse gilded ribs over each pier
-    for(let k=1;k<4;k++){const z=PIER+D.BAY*k;this.add(surf((u,v)=>V(Math.cos(u*PI)*(NHW-.3),SPR+Math.sin(u*PI)*(NHW-.3),z-1.4+v*2.8),48,1,8,1),m.cofferRed)}
+    // barrel vault springs on the cornice; coffers and transverse ribs register to the pilasters
+    this.add(this._barrelGeo(PIER-.04,ENTR-.02),m.coffer);
+    for(let k=0;k<=4;k++)this.add(this._vaultRib(PIER+D.BAY*k),m.cofferRed);
   }
   _window(p,w,h,rot,arched){ // bright glass (blooms) in a stucco frame
     const sh=new THREE.Shape();sh.moveTo(-w/2,-h/2);sh.lineTo(w/2,-h/2);if(arched){sh.lineTo(w/2,h/2-w/2);sh.absarc(0,h/2-w/2,w/2,0,PI,false)}else sh.lineTo(w/2,h/2),sh.lineTo(-w/2,h/2);sh.lineTo(-w/2,-h/2);
@@ -368,10 +376,12 @@ export class Basilica{
         for(const z of [PIER+2.6,end-2.6]){const p=new THREE.Mesh(new THREE.BoxGeometry(.5,26,2.3),m.flute);p.position.set(s*(NHW-.25),13,z);g.add(p)}
         const n=new THREE.Mesh(new THREE.CylinderGeometry(1.6,1.6,7,16,1,true,0,PI),m.dark);n.rotation.y=s>0?0:PI;n.position.set(s*(NHW+.05),8,(PIER+end)/2);g.add(n);
         const e=new THREE.Mesh(new THREE.BoxGeometry(2,1.4,len),m.travWarm);e.position.set(s*(NHW-1),32.4,PIER+len/2);g.add(e);
+        const lip=new THREE.Mesh(new THREE.BoxGeometry(2.3,.4,len),m.gold);lip.position.set(s*(NHW-1.15),33.3,PIER+len/2);g.add(lip);
         const u0=kind==='apse'?(s>0?0: (len+Math.PI*NHW)/run):0,u1=kind==='apse'?(s>0?len/run:1):1;
         const fr=new THREE.Mesh(this._friezeUV(new THREE.PlaneGeometry(len,1.7),kind==='apse'?3:4,u0,u1),this.friezeMat());fr.rotation.y=s>0?-PI/2:PI/2;fr.position.set(s*(NHW-.02),30.3,PIER+len/2);g.add(fr);
         const w=this._window(V(s*(NHW-.8),33.8,PIER+len/2),5,5.2,s>0?-PI/2:PI/2,true);this.s.remove(w);g.add(w);}
-      add(surf((u,v)=>V(Math.cos(u*PI)*NHW,SPR+Math.sin(u*PI)*NHW,PIER+v*len),48,12,4,len/10.2),m.coffer);
+      add(this._barrelGeo(PIER-.04,end+.02),m.coffer);
+      add(this._vaultRib(PIER),m.cofferRed);add(this._vaultRib(end),m.cofferRed);
       // semicircular apse end: wall + coffered half dome
       const wallM=m.trav,apse=add(surf((u,v)=>{const a=-PI/2+u*PI;return V(Math.sin(a)*NHW,v*SPR,end+Math.cos(a)*NHW)},48,8,8,SPR/4),wallM);
       add(surf((u,v)=>{const a=-PI/2+u*PI,e=v*PI/2;return V(Math.sin(a)*NHW*Math.cos(e),SPR+NHW*Math.sin(e),end+Math.cos(a)*NHW*Math.cos(e))},48,16,6,3),m.coffer);
@@ -392,10 +402,33 @@ export class Basilica{
     // apse altar & steps in 3D
     this.box(7,.5,4,0,.25,Z-R+3.4,this.mat.marbleW);this.box(4.2,1.05,1.4,0,1.0,Z-R+3.0,this.mat.marbleW,{cast:true});
   }
-  _entrance(img){const t=T.tex(img,{wrap:false});const {NHW,ENTR,SPR}=D;
-    const g=wallShape(archOutline(NHW,SPR),[],(a,y)=>V(a,y,ENTR-.02),[1,1]),U=g.attributes.uv,P=g.attributes.position;
-    for(let i=0;i<P.count;i++)U.setXY(i,(P.getX(i)+NHW)/(2*NHW),Math.min(1,P.getY(i)/(SPR+NHW)));
-    this.add(g,new THREE.MeshBasicMaterial({map:t,side:THREE.DoubleSide,color:new THREE.Color(1.25,1.2,1.15)}),{recv:false});
+  // counter-facade: real masonry, three doors (central Filarete door the largest), centred thermal window
+  _entrance(){const {NHW,ENTR,SPR}=D,m=this.mat,zIn=ENTR-.06,depth=.7;
+    const doors=[{x:0,w:4.8,h:8.05,bronze:true},{x:-7.35,w:3.05,h:6.45,bronze:false},{x:7.35,w:3.05,h:6.45,bronze:false}];
+    const holes=doors.map(d=>{const x0=d.x-d.w/2,x1=d.x+d.w/2,y0=.16;return [[x0,y0],[x0,d.h],[x1,d.h],[x1,y0]]});
+    holes.push(archPts(0,4.25,20.7,15.15));
+    const sh=new THREE.Shape(archOutline(NHW,SPR).map(([a,b])=>new THREE.Vector2(a,b)));
+    for(const h of holes)sh.holes.push(new THREE.Path(h.map(([a,b])=>new THREE.Vector2(a,b))));
+    const geo=new THREE.ExtrudeGeometry(sh,{depth,bevelEnabled:false,curveSegments:18});geo.translate(0,0,zIn);
+    const P=geo.attributes.position,U=geo.attributes.uv;for(let i=0;i<P.count;i++)U.setXY(i,P.getX(i)/4,P.getY(i)/4);U.needsUpdate=true;geo.computeVertexNormals();
+    this.add(geo,m.trav,{recv:true});
+    const wood=new THREE.MeshStandardMaterial({color:0x6a432c,roughness:.58,metalness:.12});
+    const filarete=new THREE.MeshStandardMaterial({color:0x8a5e34,metalness:.8,roughness:.32});
+    for(const d of doors){const leaf=d.bronze?filarete:wood,zLeaf=zIn+.22,t=.42;
+      this.box(d.w+t*2,t,.32,d.x,d.h+t/2,zIn-.1,m.travWarm);
+      this.box(t,d.h,.32,d.x-(d.w+t)/2,d.h/2,zIn-.1,m.travWarm);
+      this.box(t,d.h,.32,d.x+(d.w+t)/2,d.h/2,zIn-.1,m.travWarm);
+      this.box(d.w+t*2,.14,.36,d.x,d.h+t+.06,zIn-.12,m.gold);
+      this.box(d.w-.16,d.h-.2,.1,d.x,(d.h+.16)/2,zLeaf,leaf,{cast:true});
+      const rows=d.bronze?5:3,cols=d.bronze?2:2,pw=(d.w-.7)/cols,ph=(d.h-.9)/rows;
+      for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const px=d.x-d.w/2+.38+pw*(c+.5),py=.48+ph*(r+.5);
+        this.box(pw-.16,ph-.16,.05,px,py,zLeaf-.06,d.bronze?m.gold:m.travWarm)}}
+    const ring=new THREE.Mesh(new THREE.TorusGeometry(4.25,.2,8,36,PI),m.travWarm);ring.position.set(0,20.7,zIn-.04);this.s.add(ring);
+    this.box(9.2,.22,.28,0,15.05,zIn-.08,m.travWarm);
+    this._window(V(0,20.55,zIn+.08),7.7,9.15,0,true);
+    // entablature returned across the counter-facade, flush with the nave cornice (top at SPR)
+    this.box(NHW*2-.6,1.4,.5,0,32.4,zIn-.22,m.travWarm);
+    this.box(NHW*2-.3,.4,.58,0,33.3,zIn-.26,m.gold);
   }
   _piers(panel){const t=T.tex(panel,{wrap:false}),m=new THREE.MeshStandardMaterial({map:t,roughness:.5,side:THREE.DoubleSide});
     // putti & papal medallion panels on the arcade jambs (photo of the real nave pier panels)
