@@ -1,6 +1,6 @@
 // St Peter's Basilica interior, in metres. Origin: centre of the crossing at floor level; +z towards the entrance, -z towards the apse.
 import * as THREE from 'three';
-import * as T from './textures.js?v=52';
+import * as T from './textures.js?v=53';
 const V=(x,y,z)=>new THREE.Vector3(x,y,z),PI=Math.PI;
 export const D={NHW:13,ENTR:126,CROSS:20.75,PIER:31,BAY:23.75,ARCH_HW:6.5,ARCH_SPR:15,SPR:33.5,DOME_R:20.75,APSE_C:-47,TRANS_C:55.5,AISLE0:19,AISLE1:31,AISLE_H:22};
 export const archCentres=[0,1,2,3].map(k=>D.PIER+D.BAY*(k+.5));
@@ -157,8 +157,6 @@ export class Basilica{
       this.box(1.25,.1,ENTR-PIER,s*(NHW-.6),29.4,(ENTR+PIER)/2,m.gold);
       this.box(2.0,1.4,ENTR-PIER,s*(NHW-1.0),32.4,(ENTR+PIER)/2,m.travWarm,{cast:false});
       this.box(2.3,.4,ENTR-PIER,s*(NHW-1.15),33.3,(ENTR+PIER)/2,m.gold);
-      // lunette windows in the vault above each bay
-      for(const zc of archCentres)this._window(V(s*(NHW-.8),31.2+2.6,zc),5,5.2,s>0?-PI/2:PI/2,true);
     }
     // barrel vault springs on the cornice; coffers and transverse ribs register to the pilasters
     this.add(this._barrelGeo(PIER,ENTR),m.coffer);
@@ -202,8 +200,6 @@ export class Basilica{
       this._cornerChapel(s);
       // piers' aisle-side pilasters
       for(let k=0;k<=4;k++){const z=PIER+D.BAY*k;if(k>0&&k<4)this.box(.4,AH,2.2,s*(A0+.2),AH/2,z,m.flute)}
-      // aisle windows (high on the outer wall)
-      archCentres.forEach((zc,k)=>{if(!(s>0&&k===3))this._window(V(s*(A1-.05),18,zc),3,3.4,s>0?-PI/2:PI/2,true)});
     }
   }
   // corner chapel (12 m square) at the end of each aisle, against the crossing pier
@@ -216,7 +212,7 @@ export class Basilica{
     for(const x of [A0+.6,A1-.6])this.box(1.0,AH-2,.4,s*x,(AH-2)/2,Z0+.2,m.flute);
     this.box(A1-A0,.6,.6,cx,AH-1.2,Z0+.3,m.travWarm);this.box(A1-A0,.12,.7,cx,AH-.85,Z0+.35,m.gold);
     (this.chapels=this.chapels||[]).push({kind:s>0?'greg':'clem',x:cx,z:Z0+.05,rot:0});
-    this._window(V(s*(A1-.05),17,cz),2.6,3.2,s>0?-PI/2:PI/2,true);}
+  }
   // altarpiece mosaics and papal monuments from openly licensed photos (see ASSETS.md), each in its real place in the plan
   _artworks(im){const m=this.mat,mk=(img,w,h)=>{const t=T.tex(img,{wrap:false});return new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshStandardMaterial({map:t,emissiveMap:t,emissive:new THREE.Color(.32,.3,.28),roughness:.55,color:new THREE.Color(1.05,1.03,1)}))};
     const fit=(img,W,H)=>{const a=img.width/img.height;return a>W/H?[W,W/a]:[H*a,H]};
@@ -380,8 +376,7 @@ export class Basilica{
         const e=new THREE.Mesh(new THREE.BoxGeometry(2,1.4,len),m.travWarm);e.position.set(s*(NHW-1),32.4,PIER+len/2);g.add(e);
         const lip=new THREE.Mesh(new THREE.BoxGeometry(2.3,.4,len),m.gold);lip.position.set(s*(NHW-1.15),33.3,PIER+len/2);g.add(lip);
         const u0=kind==='apse'?(s>0?0: (len+Math.PI*NHW)/run):0,u1=kind==='apse'?(s>0?len/run:1):1;
-        const fr=new THREE.Mesh(this._friezeUV(new THREE.PlaneGeometry(len,1.7),kind==='apse'?3:4,u0,u1),this.friezeMat());fr.rotation.y=s>0?-PI/2:PI/2;fr.position.set(s*(NHW-.02),30.3,PIER+len/2);g.add(fr);
-        const w=this._window(V(s*(NHW-.8),33.8,PIER+len/2),5,5.2,s>0?-PI/2:PI/2,true);this.s.remove(w);g.add(w);}
+        const fr=new THREE.Mesh(this._friezeUV(new THREE.PlaneGeometry(len,1.7),kind==='apse'?3:4,u0,u1),this.friezeMat());fr.rotation.y=s>0?-PI/2:PI/2;fr.position.set(s*(NHW-.02),30.3,PIER+len/2);g.add(fr);}
       add(this._barrelGeo(PIER,end),m.coffer);
       add(this._vaultRib(PIER+2.6),m.cofferRed);add(this._vaultRib(end-2.6),m.cofferRed);
       // semicircular apse end: wall + coffered half dome
@@ -389,7 +384,6 @@ export class Basilica{
       add(surf((u,v)=>{const a=-PI/2+u*PI,e=v*PI/2;return V(Math.sin(a)*NHW*Math.cos(e),SPR+NHW*Math.sin(e),end+Math.cos(a)*NHW*Math.cos(e))},48,16,6,3),m.coffer);
       if(kind==='apse'){const cg=surf((u,v)=>{const a=PI/2-u*PI;return V(Math.sin(a)*(NHW-.06),29.45+v*1.7,end+Math.cos(a)*(NHW-.06))},64,1);
         add(this._friezeUV(cg,3,len/run,(len+Math.PI*NHW)/run),this.friezeMat())}
-      for(const a of [-PI/3,0,PI/3]){if(rot===PI&&a===0)continue;const w=this._window(V(Math.sin(a)*(NHW-.4),20,end+Math.cos(a)*(NHW-.4)),4,7,a+PI,true);this.s.remove(w);g.add(w)}
       return {g,apse}};
     this.apseArm=arm(PI,-APSE_C,'apse');arm(PI/2,TRANS_C,'trans');arm(-PI/2,TRANS_C,'trans');
   }

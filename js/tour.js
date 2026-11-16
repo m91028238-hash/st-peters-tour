@@ -2,8 +2,8 @@
 // The walk/free-cam controls are carried over from "Checkmate in the Sistine" (same eye height, joystick and gestures).
 import * as THREE from 'three';
 import { RoomEnvironment, EffectComposer, RenderPass, UnrealBloomPass, OutputPass } from 'three';
-import { Basilica, D, archCentres } from './basilica.js?v=52';
-import { tex, hotspot } from './textures.js?v=52';
+import { Basilica, D, archCentres } from './basilica.js?v=53';
+import { tex, hotspot } from './textures.js?v=53';
 const EYE=2.05; // adult eye height, metres (as in the chapel game)
 const easeIO=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
 export const PLACES=[ // id, name, where to stand, what to look at, info point position
