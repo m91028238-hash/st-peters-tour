@@ -127,3 +127,13 @@ export function reliefPanel(M){const W=512,H=840,[c,g]=cv(W,H);g.drawImage(trave
   // shadowed edge of the recess
   const gr=g.createLinearGradient(0,0,W,0);gr.addColorStop(0,'rgba(0,0,0,.35)');gr.addColorStop(.12,'rgba(0,0,0,0)');gr.addColorStop(.88,'rgba(0,0,0,0)');gr.addColorStop(1,'rgba(0,0,0,.35)');g.fillStyle=gr;g.fillRect(0,0,W,H);
   const gt=g.createLinearGradient(0,0,0,H);gt.addColorStop(0,'rgba(0,0,0,.4)');gt.addColorStop(.15,'rgba(0,0,0,0)');g.fillStyle=gt;g.fillRect(0,0,W,H);return c}
+// dark-blue oculus field with 16 gold eight-pointed stars (as around the lantern opening)
+export function oculusStars({w=2048,h=256}={}){const [c,g]=cv(w,h);
+  g.fillStyle='#1a3a7a';g.fillRect(0,0,w,h);
+  // faint smaller stars / tesserae
+  for(let i=0;i<900;i++){g.fillStyle=`rgba(255,230,150,${.08+rnd()*.18})`;g.fillRect(rnd()*w,rnd()*h,2,2)}
+  const star=(cx,cy,R,r,n=8)=>{g.beginPath();for(let k=0;k<n*2;k++){const a=k*Math.PI/n-Math.PI/2,rr=k%2?r:R;g.lineTo(cx+Math.cos(a)*rr,cy+Math.sin(a)*rr)}g.closePath()};
+  for(let i=0;i<16;i++){const cx=(i+.5)*w/16,cy=h*.5;g.fillStyle='#e8c35a';star(cx,cy,h*.38,h*.11);g.fill();g.strokeStyle='#c9a24e';g.lineWidth=2;star(cx,cy,h*.38,h*.11);g.stroke();
+    // two lesser stars toward the rim of each bay
+    g.fillStyle='#d4b24a';star(cx-w/48,cy-h*.28,h*.09,h*.03);g.fill();star(cx+w/48,cy+h*.28,h*.09,h*.03);g.fill()}
+  return c}

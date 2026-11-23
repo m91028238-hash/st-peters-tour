@@ -1,6 +1,6 @@
 // St Peter's Basilica interior, in metres. Origin: centre of the crossing at floor level; +z towards the entrance, -z towards the apse.
 import * as THREE from 'three';
-import * as T from './textures.js?v=53';
+import * as T from './textures.js?v=54';
 const V=(x,y,z)=>new THREE.Vector3(x,y,z),PI=Math.PI;
 export const D={NHW:13,ENTR:126,CROSS:20.75,PIER:31,BAY:23.75,ARCH_HW:6.5,ARCH_SPR:15,SPR:33.5,DOME_R:20.75,APSE_C:-47,TRANS_C:55.5,AISLE0:19,AISLE1:31,AISLE_H:22};
 export const archCentres=[0,1,2,3].map(k=>D.PIER+D.BAY*(k+.5));
@@ -75,14 +75,14 @@ export class Basilica{
     this._floor();this._nave();this._aisles();this._crossing();this._arms();
     this.onProgress('Michelangelo’s dome…');
     const LS=n=>T.loadImg('assets/statues/'+n);
-    const [dome,apse,entr,panel]=await Promise.all(['dome.jpg','apse.jpg','entrance.jpg','pier_panel.jpg'].map(L));this._niches();
+    const [dome,apse,entr,panel,lanternGod]=await Promise.all(['dome.jpg','apse.jpg','entrance.jpg','pier_panel.jpg','lantern_god.jpg'].map(L));this._niches();
     this.medImgs=await Promise.all(['ev_mark.jpg','ev_matthew.jpg'].map(L));this.medCol=[[1.5,1.36,1.16],[1.5,1.36,1.16]];
     {const names=[...new Set((this.domes||[]).map(d=>d.img))],P={'sd_greg.jpg':[.5,.46,.36,.24],'sd_clem.jpg':[.5,.5,.43,.43]},ims=await Promise.all(names.map(L)),o={};
      names.forEach((n,i)=>{if(ims[i])o[n]={t:T.tex(ims[i],{wrap:false}),p:P[n]||[.5,.5,.47,.47]}});this._smallDomes(o);}
     {const A={sacr:['alt_sacr.jpg',[0,0,1,1],[1.15,1.1,1.05]],greg:['alt_greg.jpg',[0,0,1,1]],clem:['alt_clem.jpg',[0,0,1,1]]},ks=Object.keys(A),ims=await Promise.all(ks.map(k=>L(A[k][0]))),o={};
      ks.forEach((k,i)=>{if(ims[i])o[k]={img:ims[i],crop:A[k][1],col:A[k][2]}});this._altars(o);}
     {const A=['transfig','jerome','sebastian','baptism','choir','present','leo','alex7','clem13','pius7'],ims=await Promise.all(A.map(k=>L('art_'+k+'.jpg'))),o={};A.forEach((k,i)=>{if(ims[i])o[k]=ims[i]});this._artworks(o);}
-    this._dome(dome);this._apsePhoto(apse);this._entrance();this._piers(panel);
+    this._dome(dome,lanternGod);this._apsePhoto(apse);this._entrance();this._piers(panel);
     this._baldacchino();this._confessio();this._peter();
     this.onProgress('The statues…');
     await Promise.all([this._statues(),this._saints()]);
@@ -339,7 +339,7 @@ export class Basilica{
     // gilded cartouche with the relic's emblem on the pediment
     ad(new THREE.CircleGeometry(.55,20),m.gold,0,Y+9.35,.9);
   }
-  _dome(img){const t=T.tex(img,{wrap:false,aniso:this.r.capabilities.getMaxAnisotropy()});t.generateMipmaps=true;
+  _dome(img,godImg){const t=T.tex(img,{wrap:false,aniso:this.r.capabilities.getMaxAnisotropy()});t.generateMipmaps=true;
     const mat=new THREE.MeshBasicMaterial({map:t,side:THREE.DoubleSide,color:new THREE.Color(1.3,1.25,1.2)});
     const R=D.DOME_R,seg=this.mobile?96:160;
     // pendentives (4-fold symmetric: near pair copied from far pair)
@@ -348,14 +348,77 @@ export class Basilica{
     // inscription frieze: legible canvas lettering on the drum ring (photo projection is not readable)
     const lathe=(pts,n)=>new THREE.LatheGeometry(pts.map(([r,y])=>new THREE.Vector2(r,y)),n);
     this.add(this._friezeUV(lathe([[R-.05,47.3],[R-.05,50.0]],seg),2,0,1,true),this.friezeMat(),{recv:false});
-    // drum, attic, shell, oculus and lantern (16-fold symmetric)
+    // drum, attic and cupola (photo). Stop just outside the oculus so the warped
+    // inscription and smeared lantern are not projected; the lantern is modelled in 3D.
     const pr=[[R,50],[R-.8,50.4],[R-.8,51.0],[R,51.3],[R,64],[R-.9,64.6],[R-.9,65.4],[R,66],[R,71]];
-    for(let i=1;i<=40;i++){const th=i/40*1.3623;pr.push([R*Math.cos(th),71+37*Math.sin(th)])}
-    pr.push([4.3,108.5],[3.9,108.5],[3.9,114.5]);for(let i=1;i<=8;i++){const th=i/8*PI/2;pr.push([3.9*Math.cos(th),114.5+2.5*Math.sin(th)])}
+    const thEnd=Math.acos(7.90/R);
+    for(let i=1;i<=40;i++){const th=i/40*thEnd;pr.push([R*Math.cos(th),71+37*Math.sin(th)])}
     this.add(projectUV(lathe(pr,seg),true),mat,{recv:false});
+    this._lantern(godImg);
     // drum windows glow (for bloom) — thin bright panes just inside the photographed windows
     const wm=new THREE.MeshBasicMaterial({color:new THREE.Color(1.5,1.42,1.25),toneMapped:false,transparent:true,opacity:.0});
     this.drumWindows=[];for(let i=0;i<16;i++){const a=(i+.5)*PI/8,o=new THREE.Mesh(new THREE.PlaneGeometry(2.6,6.5),wm);o.position.set(Math.sin(a)*(R-.15),58.6,Math.cos(a)*(R-.15));o.lookAt(0,58.6,0);this.s.add(o);this.drumWindows.push(o)}
+  }
+  // 3D lantern above the oculus: star field, Sixtus V inscription, 16 paired rib-ends,
+  // inner drum with 16 windows, and the God the Father vault. Official inner height to
+  // the lantern vault is 117.57 m (Vatican). The guidebook figure of an "18 m lantern"
+  // is taken as the exterior lantern (roof to the ball), which is not modelled here.
+  _lantern(godImg){const R=D.DOME_R,seg=this.mobile?64:96,m=this.mat,yOff=-.1;
+    const lathe=pts=>new THREE.LatheGeometry(pts.map(([r,y])=>new THREE.Vector2(r,y)),seg);
+    const sph=th=>({r:R*Math.cos(th),y:71+37*Math.sin(th)+yOff});
+    const thStar=Math.acos(8.10/R),thGold=Math.acos(5.35/R),thLip=Math.acos(4.20/R);
+    const pts=(a,b,n)=>{const p=[];for(let i=0;i<=n;i++){const s=sph(a+(b-a)*i/n);p.push([s.r,s.y])}return p};
+    // gold moulding at the outer edge of the star field
+    {const s=sph(thStar),t=new THREE.Mesh(new THREE.TorusGeometry(s.r,.07,6,seg),m.gold);t.rotation.x=PI/2;t.position.y=s.y;this.s.add(t)}
+    // large stars sit in the bays between the 16 dome ribs (shift 1/2 bay vs the photo ribs)
+    const starTex=T.tex(T.oculusStars({w:this.mobile?1024:2048,h:this.mobile?128:256}),{wrap:true,aniso:4});starTex.offset.x=1/32;
+    this.add(lathe(pts(thStar,thGold,16)),new THREE.MeshStandardMaterial({map:starTex,roughness:.45,metalness:.12,side:THREE.DoubleSide}),{recv:false});
+    // inscription: dark letters on gold, same canvas method as the drum "Tu es Petrus".
+    // Letter tops point outward (V flipped). U is left unflipped so the text reads
+    // clockwise around the ring when looking up, as in the real oculus.
+    const insTex=T.tex(T.frieze('S. PETRI GLORIAE SIXTVS PP. V. A. MDXC PONTIF. V.',{w:this.mobile?2048:4096,h:this.mobile?64:128,ink:'#1c1a16'}),{wrap:true,aniso:8});
+    const insGeo=lathe(pts(thGold,thLip,8));
+    {const U=insGeo.attributes.uv;for(let i=0;i<U.count;i++)U.setXY(i,U.getX(i),1-U.getY(i));U.needsUpdate=true}
+    this.add(insGeo,new THREE.MeshStandardMaterial({map:insTex,roughness:.4,metalness:.28,emissive:0x3a2a10,emissiveIntensity:.12,side:THREE.DoubleSide}),{recv:false});
+    const lip=sph(thLip);
+    {const t=new THREE.Mesh(new THREE.TorusGeometry(lip.r,.06,6,seg),m.gold);t.rotation.x=PI/2;t.position.y=lip.y;this.s.add(t)}
+    // 16 paired cream-and-gold rib-ends in the plane of the oculus (visible from below
+    // as the "teeth" at the inner lip), on the dome-rib meridians. Instanced to keep draw calls down.
+    const col=new THREE.MeshStandardMaterial({color:0xeee6d4,roughness:.35});
+    const dummy=new THREE.Object3D();
+    const inst=(geo,mat,place)=>{const mesh=new THREE.InstancedMesh(geo,mat,place.length);place.forEach((fn,i)=>{fn(dummy);dummy.updateMatrix();mesh.setMatrixAt(i,dummy.matrix)});mesh.instanceMatrix.needsUpdate=true;this.s.add(mesh);return mesh};
+    const teeth=[],toothCaps=[];
+    for(let i=0;i<16;i++){const a=(i+.5)*PI/8;
+      for(const d of[-.13,.13]){const ang=a+d,rr=lip.r+.12,yc=lip.y-.1;
+        teeth.push(o=>{o.position.set(Math.sin(ang)*rr,yc,Math.cos(ang)*rr);o.lookAt(0,yc,0)});
+        toothCaps.push(o=>{o.position.set(Math.sin(ang)*(lip.r-.2),yc,Math.cos(ang)*(lip.r-.2));o.lookAt(0,yc,0)})}}
+    inst(new THREE.BoxGeometry(.16,.22,.7),col,teeth);
+    inst(new THREE.BoxGeometry(.2,.16,.16),m.gold,toothCaps);
+    // inner drum: official vault height 117.57 m
+    const y0=lip.y+.08,rIn=3.95,yWin0=y0+1.15,yWinH=4.4,yCorn=yWin0+yWinH+.35,yVault=117.57;
+    const stucco=new THREE.MeshStandardMaterial({color:0xf3eadc,roughness:.42,metalness:0,side:THREE.DoubleSide});
+    this.add(lathe([[lip.r,lip.y],[rIn,y0]]),stucco);
+    // continuous cream drum so there are no dark gaps between windows
+    {const drum=new THREE.Mesh(new THREE.CylinderGeometry(rIn+.08,rIn+.08,yCorn-y0,16,1,true),stucco);drum.position.y=(y0+yCorn)/2;this.s.add(drum)}
+    const glow=new THREE.MeshBasicMaterial({color:new THREE.Color(1.28,1.2,1.05),toneMapped:false,side:THREE.DoubleSide});
+    const panes=[],pilasters=[],pilCaps=[];
+    for(let i=0;i<16;i++){
+      const a=i*PI/8,yC=yWin0+yWinH/2; // windows in the bays between the ribs
+      panes.push(o=>{o.position.set(Math.sin(a)*(rIn+.01),yC,Math.cos(a)*(rIn+.01));o.lookAt(0,yC,0)});
+      for(const d of[-.55,.55]){const ang=a+d,px=Math.sin(ang)*(rIn+.1),pz=Math.cos(ang)*(rIn+.1);
+        pilasters.push(o=>{o.position.set(px,(y0+yCorn)/2,pz);o.rotation.set(0,0,0)});
+        pilCaps.push(o=>{o.position.set(px,yCorn-.1,pz);o.rotation.set(0,0,0)})}}
+    this.lanternWindows=inst(new THREE.PlaneGeometry(.95,yWinH),glow,panes);
+    inst(new THREE.CylinderGeometry(.08,.09,yCorn-y0,8),stucco,pilasters);
+    inst(new THREE.CylinderGeometry(.11,.08,.16,8),m.gold,pilCaps);
+    {const t=new THREE.Mesh(new THREE.TorusGeometry(rIn+.05,.1,6,seg),m.gold);t.rotation.x=PI/2;t.position.y=yCorn;this.s.add(t)}
+    // vault: God the Father mosaic, or a gilt cap if the image failed to load
+    const vH=yVault-yCorn,vR=rIn,vPts=[];for(let i=0;i<=12;i++){const th=i/12*PI/2;vPts.push([vR*Math.cos(th),yCorn+vH*Math.sin(th)])}
+    const vg=lathe(vPts),U=vg.attributes.uv,P=vg.attributes.position;
+    for(let i=0;i<P.count;i++)U.setXY(i,.5+P.getX(i)/(2*vR),.5+P.getZ(i)/(2*vR));U.needsUpdate=true;
+    if(godImg){const gt=T.tex(godImg,{wrap:false,aniso:this.r.capabilities.getMaxAnisotropy()});this.add(vg,new THREE.MeshStandardMaterial({map:gt,roughness:.55,metalness:.05,side:THREE.DoubleSide}),{recv:false})}
+    else this.add(vg,new THREE.MeshStandardMaterial({color:0xe2b45c,roughness:.35,metalness:.7,side:THREE.DoubleSide}),{recv:false});
+    const L=new THREE.PointLight(0xfff0d0,8,22,1.2);L.position.set(0,(y0+yCorn)/2,0);this.s.add(L);
   }
   // the four great statues in the crossing piers' niches (photos by Gary Todd, public domain), wrapped onto concave niches
   // the four great statues' niches in the crossing piers: concave marble shells (the statues are modelled, see _statues)
