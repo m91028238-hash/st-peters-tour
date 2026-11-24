@@ -1,6 +1,6 @@
 // St Peter's Basilica interior, in metres. Origin: centre of the crossing at floor level; +z towards the entrance, -z towards the apse.
 import * as THREE from 'three';
-import * as T from './textures.js?v=60';
+import * as T from './textures.js?v=61';
 const V=(x,y,z)=>new THREE.Vector3(x,y,z),PI=Math.PI;
 export const D={NHW:13,ENTR:126,CROSS:20.75,PIER:31,BAY:23.75,ARCH_HW:6.5,ARCH_SPR:15,SPR:33.5,DOME_R:20.75,APSE_C:-47,TRANS_C:55.5,AISLE0:19,AISLE1:31,AISLE_H:22};
 export const archCentres=[0,1,2,3].map(k=>D.PIER+D.BAY*(k+.5));
@@ -358,10 +358,10 @@ export class Basilica{
       const rect= (zc)=>[[cxAisle/s-hx,zc-hz],[cxAisle/s+hx,zc-hz],[cxAisle/s+hx,zc+hz],[cxAisle/s-hx,zc+hz]];
       this.add(wallShape([[A0,PIER+D.BAY],[A1,PIER+D.BAY],[A1,ENTR],[A0,ENTR]],archCentres.slice(1).map(rect),(a,b)=>V(s*a,AH,b)),m.coffer);
       // Unique mosaics for the six elliptical aisle cupolas. k=3 is nearest the entrance (Pietà / Baptistery).
-      const aisleImgs=s>0?[null,'sd_sacrament.jpg','sd_sebastian.jpg','sd_pieta.jpg']:[null,'sd_choir.jpg','sd_presentation.jpg','sd_baptistery.jpg'];
+      const aisleImgs=s>0?[null,'sd_sacrament.jpg','sd_sebastian.jpg',null]:[null,'sd_choir.jpg','sd_presentation.jpg','sd_baptistery.jpg'];
       const aisleNames=s>0?[null,'sacrament','sebastian','pieta']:[null,'choir','presentation','baptistery'];
       // uvCornice is the gold cornice in the looking-up photo (measured on the crop). frameMap uses the same photo on the pendentives.
-      const aisleUV={sacrament:{uvInner:.08,uvCornice:.38,uvFrame:.48,frameMap:true},sebastian:{uvInner:.12,uvCornice:.38,uvFrame:.48,frameMap:false},pieta:{uvInner:.12,uvCornice:.40,uvFrame:.48,frameMap:false},choir:{uvInner:.08,uvCornice:.44,uvFrame:.495,frameMap:true},presentation:{uvInner:.08,uvCornice:.45,uvFrame:.495,frameMap:true},baptistery:{uvInner:.10,uvCornice:.48,uvFrame:.50,frameMap:true}};
+      const aisleUV={sacrament:{uvInner:.0,uvCornice:.48,uvFrame:.50,frameMap:false},sebastian:{uvInner:.0,uvCornice:.48,uvFrame:.50,frameMap:false},pieta:{uvInner:.0,uvCornice:.48,uvFrame:.50,frameMap:false},choir:{uvInner:.0,uvCornice:.48,uvFrame:.50,frameMap:false},presentation:{uvInner:.0,uvCornice:.48,uvFrame:.50,frameMap:false},baptistery:{uvInner:.0,uvCornice:.48,uvFrame:.50,frameMap:false}};
       archCentres.forEach((zc,k)=>{if(k===0)return;(this.domes=this.domes||[]).push({cx:cxAisle,cz:zc,rx:5.2,rz:6.4,ax,az,y:AH,img:aisleImgs[k],kind:'oval',name:aisleNames[k],drop:0,rise:2.4,...(aisleUV[aisleNames[k]]||{})})});
       this.add(new THREE.PlaneGeometry(A1-A0,AH).translate(0,AH/2,0),m.trav).position.set(s*(A0+A1)/2,0,ENTR);
       // the aisle ends in an arch into the corner chapel under a minor dome (Gregorian Chapel on the right, Clementine Chapel on the left)
@@ -376,7 +376,7 @@ export class Basilica{
   _cornerChapel(s){const {AISLE0:A0,AISLE1:A1,AISLE_H:AH,PIER}=D,m=this.mat,Z0=19,cx=s*(A0+A1)/2,cz=(Z0+PIER)/2;
     this.add(new THREE.PlaneGeometry(A1-A0,AH).translate(0,AH/2,0),m.travWarm).position.set(cx,0,Z0);
     for(const x of [A0,A1])this.add(new THREE.PlaneGeometry(PIER-Z0,AH).translate(0,AH/2,0).rotateY(PI/2),m.trav).position.set(s*x,0,cz);
-    (this.domes=this.domes||[]).push({cx,cz,rx:5.2,rz:5.2,ax:(A1-A0)/2,az:(A1-A0)/2,y:AH,img:s>0?'sd_greg.jpg':'sd_clem.jpg',kind:'corner',vaultY:42,name:s>0?'gregorian':'clementine',uvInner:.07,uvCornice:.40,uvFrame:.48,frameMap:false});
+    (this.domes=this.domes||[]).push({cx,cz,rx:5.2,rz:5.2,ax:(A1-A0)/2,az:(A1-A0)/2,y:AH,img:s>0?null:'sd_clem.jpg',kind:'corner',vaultY:42,name:s>0?'gregorian':'clementine',uvInner:0,uvCornice:.48,uvFrame:.50,frameMap:false});
     // paired pilasters in the corners and a gilded cornice
     for(const x of [A0+.6,A1-.6])this.box(1.0,AH-2,.4,s*x,(AH-2)/2,Z0+.2,m.flute);
     this.box(A1-A0,.6,.6,cx,AH-1.2,Z0+.3,m.travWarm);this.box(A1-A0,.12,.7,cx,AH-.85,Z0+.35,m.gold);
@@ -388,7 +388,7 @@ export class Basilica{
     for(const x of [A0,A1])this.add(new THREE.PlaneGeometry(PIER+Z1,AH).translate(0,AH/2,0).rotateY(PI/2),m.trav).position.set(s*x,0,cz);
     // Madonna of the Column (south, s=-1) has a Commons looking-up photo. Sts Michael & Petronilla (north) does not: gilt coffers, mosaic unconfirmed.
     // Solid back wall at z=-PIER: there is no west aisle, so an arch here would open to the exterior and leak the walk grid.
-    (this.domes=this.domes||[]).push({cx,cz,rx:5.2,rz:5.2,ax:(A1-A0)/2,az:(A1-A0)/2,y:AH,img:s>0?null:'sd_madonna.jpg',kind:'corner',vaultY:42,name:s>0?'petronilla':'madonna',uvInner:.06,uvCornice:.38,uvFrame:.48,frameMap:false});
+    (this.domes=this.domes||[]).push({cx,cz,rx:5.2,rz:5.2,ax:(A1-A0)/2,az:(A1-A0)/2,y:AH,img:s>0?null:'sd_madonna.jpg',kind:'corner',vaultY:42,name:s>0?'petronilla':'madonna',uvInner:0,uvCornice:.48,uvFrame:.50,frameMap:false});
     for(const x of [A0+.6,A1-.6])this.box(1.0,AH-2,.4,s*x,(AH-2)/2,Z1-.2,m.flute);
     this.box(A1-A0,.6,.6,cx,AH-1.2,Z1-.3,m.travWarm);this.box(A1-A0,.12,.7,cx,AH-.85,Z1-.35,m.gold);
     this.add(new THREE.PlaneGeometry(A1-A0,AH).translate(0,AH/2,0),m.travWarm).position.set(cx,0,-PIER);
@@ -455,7 +455,7 @@ export class Basilica{
     this.add(g,mat,{recv:true})}
   // Shallow elliptical cap whose rim lies in the vault plane. The real aisle cupolas are saucers in
   // the ceiling, not half-ellipsoids standing on their equator (which left the gold ring floating).
-  _ovalMinorDome(d,imgs){const seg=this.mobile?32:48,H=d.rise||2.4,rOcc=d.rOcc||1.05,y=d.y;
+  _ovalMinorDome(d,imgs){const seg=this.mobile?32:48,H=d.rise||2.4,rOcc=d.rOcc||.04,y=d.y;
     this._ovalBayPendentives(d,imgs);
     this._ellipseMolding(d.cx,y+0.05,d.cz,d.rx,d.rz,.07,seg);
     const rMin=Math.min(d.rx,d.rz),prOcc=rOcc/rMin,Rs=(rMin*rMin+H*H)/(2*H);
@@ -464,19 +464,20 @@ export class Basilica{
     this._vaultUV(g,d,rOcc);
     const map=d.img&&imgs[d.img],mat=map?new THREE.MeshStandardMaterial({map,roughness:.55,metalness:.05,side:THREE.DoubleSide}):new THREE.MeshStandardMaterial({map:T.tex(T.minorCoffers()),roughness:.4,metalness:.25,side:THREE.DoubleSide});
     this.add(g,mat,{recv:false});
-    this._smallLantern(d.cx,y+H,d.cz,rOcc);
+    if(!d.img)this._smallLantern(d.cx,y+H,d.cz,rOcc);
   }
   // the four crossing-corner chapels: coffered pendentives, a round drum with windows and a cupola (interior height about 42 m). The looking-up photo is mapped on the cupola only, so the 3D drum is not doubled.
-  _cornerMinorDome(d,imgs){const m=this.mat,seg=this.mobile?32:48,r=d.rx,y0=d.y,drumH=8,yCorn=y0+drumH,yVault=d.vaultY||42,rOcc=d.rOcc||1.15;
-    const stucco=new THREE.MeshStandardMaterial({color:0xf3eadc,roughness:.42,metalness:0,side:THREE.DoubleSide});
+  _cornerMinorDome(d,imgs){const m=this.mat,seg=this.mobile?32:48,r=d.rx,y0=d.y,drumH=1.0,yCorn=y0+drumH,yVault=d.vaultY||42,rOcc=d.rOcc||.04;
+    const stucco=new THREE.MeshStandardMaterial({color:0xcfc3a8,roughness:.5,metalness:0,side:THREE.DoubleSide});
     this._ovalBayPendentives({...d,drop:d.drop||6.7,ax:d.ax||r*1.15,az:d.az||r*1.15},imgs);
-    this._ellipseMolding(d.cx,y0,d.cz,r+.02,r+.02,.1,seg);
+    // stone spring at the vault; the gilt cornice sits on the cupola rim (yCorn), locked to the photo
     {const drum=new THREE.Mesh(new THREE.CylinderGeometry(r*.98,r*.98,drumH,seg,1,true),stucco);drum.position.set(d.cx,y0+drumH/2,d.cz);this.s.add(drum)}
-    const glow=new THREE.MeshBasicMaterial({color:new THREE.Color(1.12,1.06,.95),toneMapped:false,side:THREE.DoubleSide});
-    const panes=[],dummy=new THREE.Object3D(),yC=y0+drumH*.5,winH=drumH*.55;
+    // modest drum windows, not blown-out glare panes
+    const winM=new THREE.MeshStandardMaterial({color:0xd8c9a0,emissive:0x3a3018,emissiveIntensity:.35,roughness:.35,metalness:0,side:THREE.DoubleSide});
+    const panes=[],dummy=new THREE.Object3D(),yC=y0+drumH*.5,winH=drumH*.28;
     for(let i=0;i<8;i++){const a=(i+.5)*PI/4;
       panes.push(o=>{o.position.set(d.cx+Math.cos(a)*r*.97,yC,d.cz+Math.sin(a)*r*.97);o.lookAt(d.cx,yC,d.cz)})}
-    {const mesh=new THREE.InstancedMesh(new THREE.PlaneGeometry(1.6,winH),glow,panes.length);
+    {const mesh=new THREE.InstancedMesh(new THREE.PlaneGeometry(.9,winH),winM,panes.length);
       panes.forEach((fn,i)=>{fn(dummy);dummy.updateMatrix();mesh.setMatrixAt(i,dummy.matrix)});mesh.instanceMatrix.needsUpdate=true;this.s.add(mesh)}
     this._ellipseMolding(d.cx,yCorn,d.cz,r,r,.1,seg);
     const capH=Math.max(6,yVault-2-yCorn);
@@ -484,23 +485,14 @@ export class Basilica{
     g.translate(d.cx,0,d.cz);this._vaultUV(g,d,rOcc);
     const map=d.img&&imgs[d.img],mat=map?new THREE.MeshStandardMaterial({map,roughness:.55,metalness:.05,side:THREE.DoubleSide}):new THREE.MeshStandardMaterial({map:T.tex(T.minorCoffers()),roughness:.4,metalness:.25,side:THREE.DoubleSide});
     this.add(g,mat,{recv:false});
-    this._smallLantern(d.cx,yCorn+capH*Math.sin(Math.acos(rOcc/r)),d.cz,rOcc);
+    if(!d.img)this._smallLantern(d.cx,yCorn+capH*Math.sin(Math.acos(rOcc/r)),d.cz,rOcc);
   }
-  _smallLantern(x,y,z,r){const m=this.mat,h=Math.max(1.6,r*.9),seg=this.mobile?16:24;
-    const stucco=new THREE.MeshStandardMaterial({color:0xf3eadc,roughness:.42,metalness:0,side:THREE.DoubleSide});
-    {const t=new THREE.Mesh(new THREE.TorusGeometry(r,.07,6,seg*2),m.gold);t.rotation.x=PI/2;t.position.set(x,y,z);this.s.add(t)}
-    {const c=new THREE.Mesh(new THREE.CylinderGeometry(r*.92,r,h,seg,1,true),stucco);c.position.set(x,y+h/2,z);this.s.add(c)}
-    const glow=new THREE.MeshBasicMaterial({color:new THREE.Color(1.25,1.16,1.0),toneMapped:false,side:THREE.DoubleSide});
-    const dummy=new THREE.Object3D(),panes=[];
-    for(let i=0;i<8;i++){const a=(i+.5)*PI/4;
-      panes.push(o=>{o.position.set(x+Math.cos(a)*r*.9,y+h/2,z+Math.sin(a)*r*.9);o.lookAt(x,y+h/2,z)})}
-    {const mesh=new THREE.InstancedMesh(new THREE.PlaneGeometry(r*.55,h*.75),glow,8);
-      panes.forEach((fn,i)=>{fn(dummy);dummy.updateMatrix();mesh.setMatrixAt(i,dummy.matrix)});mesh.instanceMatrix.needsUpdate=true;this.s.add(mesh)}
-    {const t=new THREE.Mesh(new THREE.TorusGeometry(r*.92,.06,6,seg*2),m.gold);t.rotation.x=PI/2;t.position.set(x,y+h,z);this.s.add(t)}
-    const cap=new THREE.LatheGeometry(Array.from({length:8},(_,i)=>{const th=i/7*PI/2;return new THREE.Vector2(r*.92*Math.cos(th),y+h+Math.max(.9,r*.5)*Math.sin(th))}),seg);
-    cap.translate(x,0,z);
-    this.add(cap,new THREE.MeshStandardMaterial({color:0xe2b45c,roughness:.35,metalness:.65,side:THREE.DoubleSide}),{recv:false});
-  }
+  _smallLantern(x,y,z,r){const m=this.mat,seg=this.mobile?16:24;
+    // The looking-up mosaic already shows the lantern at the apex. A gold ring marks the
+    // opening; the previous gilt cap/ball is removed so it cannot sit off the photo lantern.
+    const ringR=Math.max(.45,r);
+    {const t=new THREE.Mesh(new THREE.TorusGeometry(ringR,.05,6,seg*2),m.gold);t.rotation.x=PI/2;t.position.set(x,y+.04,z);this.s.add(t)}}
+
   // chapel altars: the real altar wall from an openly licensed photo, with the altar table, steps, candlesticks and (Clementine) St Gregory's sarcophagus in 3D
   _altars(imgs){const m=this.mat;
     for(const c of this.chapels||[]){const im=imgs[c.kind];if(!im)continue;const crop=im.crop,W=c.kind==='sacr'?8.2:c.kind==='clem'?5.6:6.2,H=W*(crop[3]*im.img.height)/(crop[2]*im.img.width);
