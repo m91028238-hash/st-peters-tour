@@ -1,4 +1,4 @@
-import { Tour, PLACES } from './tour.js?v=55';
+import { Tour, PLACES } from './tour.js?v=56';
 const $=id=>document.getElementById(id);
 const tour=window.TOUR=new Tour($('stage'),{onStatus:s=>{$('status').textContent=s},onInfo:p=>showInfo(p)});
 const bar=document.querySelector('#loading .bar i');let prog=0;const step=s=>{prog=Math.min(95,prog+22);bar.style.width=prog+'%';document.querySelector('#loading .lt').textContent=s};

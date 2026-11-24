@@ -1,6 +1,6 @@
 // St Peter's Basilica interior, in metres. Origin: centre of the crossing at floor level; +z towards the entrance, -z towards the apse.
 import * as THREE from 'three';
-import * as T from './textures.js?v=55';
+import * as T from './textures.js?v=56';
 const V=(x,y,z)=>new THREE.Vector3(x,y,z),PI=Math.PI;
 export const D={NHW:13,ENTR:126,CROSS:20.75,PIER:31,BAY:23.75,ARCH_HW:6.5,ARCH_SPR:15,SPR:33.5,DOME_R:20.75,APSE_C:-47,TRANS_C:55.5,AISLE0:19,AISLE1:31,AISLE_H:22};
 export const archCentres=[0,1,2,3].map(k=>D.PIER+D.BAY*(k+.5));
@@ -190,14 +190,19 @@ export class Basilica{
           this.add(new THREE.PlaneGeometry(10,18).translate(0,9,0).rotateY(s>0?-PI/2:PI/2),m.travWarm).position.set(s*x1,0,zc);
           this.box(1.2,1.1,3.4,s*(x1-.7),.55,zc,m.marbleW,{cast:true});(this.recess=this.recess||[]).push({s,k,x:s*(x1-.34),z:zc,rot:s>0?-PI/2:PI/2});}
       });
-      // coffered aisle ceiling opened by a small oval dome over every bay (as in the real aisles), and end walls
-      this.add(wallShape([[A0,PIER],[A1,PIER],[A1,ENTR],[A0,ENTR]],archCentres.map(zc=>ell((A0+A1)/2,zc,5.2,6.4)),(a,b)=>V(s*a,AH,b)),m.cofferRed);
-      // one 3D cupola in each aisle bay. k=3 is nearest the entrance (Pietà / Baptistery), k=0 nearest the crossing.
-      // Unique mosaics for the six named chapel/vestibule cupolas. The two crossing-end bays (k=0) have no confirmed Commons looking-up photo.
-      const aisleImgs=s>0?['','sd_sacrament.jpg','sd_sebastian.jpg','sd_pieta.jpg']:['','sd_choir.jpg','sd_presentation.jpg','sd_baptistery.jpg'];
-      const aisleNames=s>0?['aisle-north-0','sacrament','sebastian','pieta']:['aisle-south-0','choir','presentation','baptistery'];
-      const aisleUV={sacrament:{uvInner:.10,uvOuter:.36},sebastian:{uvInner:.12,uvOuter:.40},pieta:{uvInner:.12,uvOuter:.44},choir:{uvInner:.07,uvOuter:.42},presentation:{uvInner:.07,uvOuter:.42},baptistery:{uvInner:.10,uvOuter:.40}};
-      archCentres.forEach((zc,k)=>(this.domes=this.domes||[]).push({cx:s*(A0+A1)/2,cz:zc,rx:5.2,rz:6.4,y:AH,img:aisleImgs[k]||null,kind:'oval',name:aisleNames[k],...(aisleUV[aisleNames[k]]||{})}));
+      // Aisle ceilings, from the real Maderno bays: six elliptical cupolas (three per aisle, k=1,2,3)
+      // sit on pendentives and a gilt coffered frame, flush at a gold cornice, and are lit by a lantern.
+      // The crossing-end bay (k=0) is not one of those six: a plain coffered vault, no invented cupola.
+      const ax=(A1-A0)/2, az=7.8, cxAisle=s*(A0+A1)/2;
+      this.add(wallShape([[A0,PIER],[A1,PIER],[A1,PIER+D.BAY],[A0,PIER+D.BAY]],[],(a,b)=>V(s*a,AH,b)),m.coffer);
+      const rect= (zc)=>[[cxAisle/s-ax,zc-az],[cxAisle/s+ax,zc-az],[cxAisle/s+ax,zc+az],[cxAisle/s-ax,zc+az]];
+      this.add(wallShape([[A0,PIER+D.BAY],[A1,PIER+D.BAY],[A1,ENTR],[A0,ENTR]],archCentres.slice(1).map(rect),(a,b)=>V(s*a,AH,b)),m.coffer);
+      // Unique mosaics for the six elliptical aisle cupolas. k=3 is nearest the entrance (Pietà / Baptistery).
+      const aisleImgs=s>0?[null,'sd_sacrament.jpg','sd_sebastian.jpg','sd_pieta.jpg']:[null,'sd_choir.jpg','sd_presentation.jpg','sd_baptistery.jpg'];
+      const aisleNames=s>0?[null,'sacrament','sebastian','pieta']:[null,'choir','presentation','baptistery'];
+      // uvCornice is the gold-ring radius in the looking-up photo; frameMap uses the same photo on the pendentives.
+      const aisleUV={sacrament:{uvInner:.08,uvCornice:.33,uvFrame:.47,frameMap:true},sebastian:{uvInner:.12,uvCornice:.38,uvFrame:.48,frameMap:false},pieta:{uvInner:.12,uvCornice:.42,uvFrame:.48,frameMap:false},choir:{uvInner:.07,uvCornice:.36,uvFrame:.47,frameMap:true},presentation:{uvInner:.07,uvCornice:.34,uvFrame:.47,frameMap:true},baptistery:{uvInner:.10,uvCornice:.40,uvFrame:.47,frameMap:true}};
+      archCentres.forEach((zc,k)=>{if(k===0)return;(this.domes=this.domes||[]).push({cx:cxAisle,cz:zc,rx:5.2,rz:6.4,ax,az,y:AH,img:aisleImgs[k],kind:'oval',name:aisleNames[k],drop:6,...(aisleUV[aisleNames[k]]||{})})});
       this.add(new THREE.PlaneGeometry(A1-A0,AH).translate(0,AH/2,0),m.trav).position.set(s*(A0+A1)/2,0,ENTR);
       // the aisle ends in an arch into the corner chapel under a minor dome (Gregorian Chapel on the right, Clementine Chapel on the left)
       this.add(wallShape([[A0,0],[A1,0],[A1,AH],[A0,AH]],[archPts((A0+A1)/2,4.6,12.5)],(a,y)=>V(s*a,y,PIER),[4,4]),m.trav);
@@ -211,8 +216,7 @@ export class Basilica{
   _cornerChapel(s){const {AISLE0:A0,AISLE1:A1,AISLE_H:AH,PIER}=D,m=this.mat,Z0=19,cx=s*(A0+A1)/2,cz=(Z0+PIER)/2;
     this.add(new THREE.PlaneGeometry(A1-A0,AH).translate(0,AH/2,0),m.travWarm).position.set(cx,0,Z0);
     for(const x of [A0,A1])this.add(new THREE.PlaneGeometry(PIER-Z0,AH).translate(0,AH/2,0).rotateY(PI/2),m.trav).position.set(s*x,0,cz);
-    this._chapelPendentives(cx,cz,(A1-A0)/2,5.2,AH,m.travWarm);
-    (this.domes=this.domes||[]).push({cx,cz,rx:5.2,rz:5.2,y:AH,img:s>0?'sd_greg.jpg':'sd_clem.jpg',kind:'corner',vaultY:42,name:s>0?'gregorian':'clementine',uvInner:.07,uvOuter:.43});
+    (this.domes=this.domes||[]).push({cx,cz,rx:5.2,rz:5.2,ax:(A1-A0)/2,az:(A1-A0)/2,y:AH,img:s>0?'sd_greg.jpg':'sd_clem.jpg',kind:'corner',vaultY:42,name:s>0?'gregorian':'clementine',uvInner:.07,uvCornice:.40,uvFrame:.48,frameMap:false});
     // paired pilasters in the corners and a gilded cornice
     for(const x of [A0+.6,A1-.6])this.box(1.0,AH-2,.4,s*x,(AH-2)/2,Z0+.2,m.flute);
     this.box(A1-A0,.6,.6,cx,AH-1.2,Z0+.3,m.travWarm);this.box(A1-A0,.12,.7,cx,AH-.85,Z0+.35,m.gold);
@@ -222,10 +226,9 @@ export class Basilica{
   _westCornerChapel(s){const {AISLE0:A0,AISLE1:A1,AISLE_H:AH,PIER}=D,m=this.mat,Z1=-19,cx=s*(A0+A1)/2,cz=(Z1-PIER)/2;
     this.add(new THREE.PlaneGeometry(A1-A0,AH).translate(0,AH/2,0),m.travWarm).position.set(cx,0,Z1);
     for(const x of [A0,A1])this.add(new THREE.PlaneGeometry(PIER+Z1,AH).translate(0,AH/2,0).rotateY(PI/2),m.trav).position.set(s*x,0,cz);
-    this._chapelPendentives(cx,cz,(A1-A0)/2,5.2,AH,m.travWarm);
     // Madonna of the Column (south, s=-1) has a Commons looking-up photo. Sts Michael & Petronilla (north) does not: gilt coffers, mosaic unconfirmed.
     // Solid back wall at z=-PIER: there is no west aisle, so an arch here would open to the exterior and leak the walk grid.
-    (this.domes=this.domes||[]).push({cx,cz,rx:5.2,rz:5.2,y:AH,img:s>0?null:'sd_madonna.jpg',kind:'corner',vaultY:42,name:s>0?'petronilla':'madonna',uvInner:.06,uvOuter:.43});
+    (this.domes=this.domes||[]).push({cx,cz,rx:5.2,rz:5.2,ax:(A1-A0)/2,az:(A1-A0)/2,y:AH,img:s>0?null:'sd_madonna.jpg',kind:'corner',vaultY:42,name:s>0?'petronilla':'madonna',uvInner:.06,uvCornice:.38,uvFrame:.48,frameMap:false});
     for(const x of [A0+.6,A1-.6])this.box(1.0,AH-2,.4,s*x,(AH-2)/2,Z1-.2,m.flute);
     this.box(A1-A0,.6,.6,cx,AH-1.2,Z1-.3,m.travWarm);this.box(A1-A0,.12,.7,cx,AH-.85,Z1-.35,m.gold);
     this.add(new THREE.PlaneGeometry(A1-A0,AH).translate(0,AH/2,0),m.travWarm).position.set(cx,0,-PIER);
@@ -256,8 +259,8 @@ export class Basilica{
     wall('clem13',37.7,-12.95,0,10,6.4);        // Canova, north (right) transept passage
     wall('pius7',-30.95,25,PI/2,7.5,7);         // Thorvaldsen, Clementine Chapel
   }
-  // Minor cupolas as real 3D architecture (short drum, windows, shell, lantern). Mosaic photos, where we have a
-  // unique Commons looking-up shot, are applied only to the cupola shell; the lantern is never a projected smear.
+  // Minor cupolas as real 3D architecture. Aisle ovals (Maderno): mosaic shell flush with
+  // pendentives and a coffered frame at a gold cornice, lit by a 3D lantern — no drum sitting in a flat slab.
   _smallDomes(imgs){(this.domes||[]).forEach(d=>{(d.kind==='corner'?this._cornerMinorDome:this._ovalMinorDome).call(this,d,imgs)});}
   // circular-section gold moulding along an ellipse (a scaled torus stretches the tube and scallops the rim)
   _ellipseMolding(cx,y,cz,rx,rz,tube=.08,seg=48){
@@ -266,36 +269,39 @@ export class Basilica{
     const pts=[];for(let i=0;i<n;i++){const t=i/n*2*PI;pts.push(new THREE.Vector3(Math.cos(t)*rx,0,Math.sin(t)*rz))}
     const g=new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts,true),n,tube,8,true);
     const o=new THREE.Mesh(g,this.mat.gold);o.position.set(cx,y,cz);this.s.add(o);return o}
-  _domeShellUV(g,d,rOcc){const inner=d.uvInner??.08,outer=d.uvOuter??.40,P=g.attributes.position,U=g.attributes.uv,prOcc=rOcc/Math.min(d.rx,d.rz);
+  // Planar-from-below UVs: photo centre at the lantern, uvCornice at the gold ring, uvFrame at the bay corners.
+  _vaultUV(g,d,rOcc){const inner=d.uvInner??.08,corn=d.uvCornice??(d.uvOuter??.34),frame=d.uvFrame??.48;
+    const P=g.attributes.position,U=g.attributes.uv,prOcc=rOcc/Math.min(d.rx,d.rz);
+    const ax=d.ax||d.rx*1.15,az=d.az||d.rz*1.15,prRect=Math.hypot(ax/d.rx,az/d.rz);
     for(let k=0;k<P.count;k++){const sx=(P.getX(k)-d.cx)/d.rx,sz=(P.getZ(k)-d.cz)/d.rz,pr=Math.hypot(sx,sz)||1e-6;
-      const texR=inner+(outer-inner)*(pr-prOcc)/Math.max(1e-6,1-prOcc);U.setXY(k,.5+(texR/pr)*sx,.5+(texR/pr)*sz)}U.needsUpdate=true;return g}
-  _chapelPendentives(cx,cz,a,r,yCircle,mat){const R=a*Math.SQRT2,ySpr=yCircle-Math.sqrt(Math.max(0,R*R-r*r)),seg=this.mobile?24:36;
-    const g=surf((u,v)=>{const t=u*2*PI,rMax=a/Math.max(Math.abs(Math.cos(t)),Math.abs(Math.sin(t)),1e-6),rr=r+(rMax-r)*v,dx=Math.cos(t)*rr,dz=Math.sin(t)*rr;
-      return V(cx+dx,ySpr+Math.sqrt(Math.max(0,R*R-dx*dx-dz*dz)),cz+dz)},seg,6);
+      const texR=pr<=1?inner+(corn-inner)*(pr-prOcc)/Math.max(1e-6,1-prOcc):corn+(frame-corn)*(pr-1)/Math.max(1e-6,prRect-1);
+      U.setXY(k,.5+(texR/pr)*sx,.5+(texR/pr)*sz)}U.needsUpdate=true;return g}
+  _ovalBayPendentives(d,imgs){const seg=this.mobile?28:40,ax=d.ax||6,az=d.az||7.8,drop=d.drop||6,y=d.y;
+    const eC=(ax/d.rx)**2+(az/d.rz)**2;
+    const g=surf((u,v)=>{const t=u*2*PI,AX=ax/d.rx,AZ=az/d.rz;
+      const rMax=1/Math.max(Math.abs(Math.cos(t)/AX),Math.abs(Math.sin(t)/AZ),1e-6),rr=1+(rMax-1)*v;
+      const X=Math.cos(t)*rr,Z=Math.sin(t)*rr,e=X*X+Z*Z,yP=y-drop*Math.max(0,e-1)/Math.max(1e-6,eC-1);
+      return V(d.cx+X*d.rx,yP,d.cz+Z*d.rz)},seg,8);
+    const map=d.frameMap&&d.img&&imgs[d.img];
+    if(map)this._vaultUV(g,d,d.rOcc||1.05);
+    else{const P=g.attributes.position,U=g.attributes.uv;for(let k=0;k<P.count;k++)U.setXY(k,P.getX(k)/4,P.getZ(k)/4);U.needsUpdate=true}
+    const mat=map?new THREE.MeshStandardMaterial({map,roughness:.55,metalness:.05,side:THREE.DoubleSide}):new THREE.MeshStandardMaterial({map:T.tex(T.coffers(this.M,{red:false})),roughness:.45,metalness:.15,side:THREE.DoubleSide});
     this.add(g,mat,{recv:true})}
-  _ovalMinorDome(d,imgs){const m=this.mat,seg=this.mobile?32:48,drumH=2.0,H=d.rise||5.0,rOcc=d.rOcc||1.05;
-    const stucco=new THREE.MeshStandardMaterial({color:0xf3eadc,roughness:.42,metalness:0,side:THREE.DoubleSide});
-    this._ellipseMolding(d.cx,d.y-.02,d.cz,d.rx+.04,d.rz+.04,.07,seg);
-    const drum=surf((u,v)=>{const a=u*2*PI;return V(d.cx+Math.cos(a)*d.rx*.98,d.y+v*drumH,d.cz+Math.sin(a)*d.rz*.98)},seg,1);
-    this.add(drum,stucco,{recv:true});
-    const yC=d.y+drumH/2,glow=new THREE.MeshBasicMaterial({color:new THREE.Color(1.12,1.06,.95),toneMapped:false,side:THREE.DoubleSide});
-    const panes=[],dummy=new THREE.Object3D();
-    for(let i=0;i<8;i++){const a=(i+.5)*PI/4;
-      panes.push(o=>{o.position.set(d.cx+Math.cos(a)*d.rx*.96,yC,d.cz+Math.sin(a)*d.rz*.96);o.lookAt(d.cx,yC,d.cz)})}
-    {const mesh=new THREE.InstancedMesh(new THREE.PlaneGeometry(.9,drumH*.7),glow,panes.length);
-      panes.forEach((fn,i)=>{fn(dummy);dummy.updateMatrix();mesh.setMatrixAt(i,dummy.matrix)});mesh.instanceMatrix.needsUpdate=true;this.s.add(mesh)}
-    this._ellipseMolding(d.cx,d.y+drumH,d.cz,d.rx,d.rz,.07,seg);
+  _ovalMinorDome(d,imgs){const seg=this.mobile?32:48,H=d.rise||5.0,rOcc=d.rOcc||1.05,y=d.y;
+    this._ovalBayPendentives(d,imgs);
+    this._ellipseMolding(d.cx,y,d.cz,d.rx+.02,d.rz+.02,.08,seg);
     const eMax=Math.acos(Math.min(.92,rOcc/Math.min(d.rx,d.rz)));
-    const g=surf((u,v)=>{const a=u*2*PI,e=v*eMax;return V(d.cx+Math.cos(a)*d.rx*Math.cos(e),d.y+drumH+H*Math.sin(e),d.cz+Math.sin(a)*d.rz*Math.cos(e))},seg,12);
-    this._domeShellUV(g,d,rOcc);
+    const g=surf((u,v)=>{const a=u*2*PI,e=v*eMax;return V(d.cx+Math.cos(a)*d.rx*Math.cos(e),y+H*Math.sin(e),d.cz+Math.sin(a)*d.rz*Math.cos(e))},seg,12);
+    this._vaultUV(g,d,rOcc);
     const map=d.img&&imgs[d.img],mat=map?new THREE.MeshStandardMaterial({map,roughness:.55,metalness:.05,side:THREE.DoubleSide}):new THREE.MeshStandardMaterial({map:T.tex(T.minorCoffers()),roughness:.4,metalness:.25,side:THREE.DoubleSide});
     this.add(g,mat,{recv:false});
-    this._smallLantern(d.cx,d.y+drumH+H*Math.sin(eMax),d.cz,rOcc);
+    this._smallLantern(d.cx,y+H*Math.sin(eMax),d.cz,rOcc);
   }
-  // the four crossing-corner chapels: pendentives, round drum with windows and a cupola, interior height about 42 m (Gregorian Chapel figure)
+  // the four crossing-corner chapels: coffered pendentives, a round drum with windows and a cupola (interior height about 42 m). The looking-up photo is mapped on the cupola only, so the 3D drum is not doubled.
   _cornerMinorDome(d,imgs){const m=this.mat,seg=this.mobile?32:48,r=d.rx,y0=d.y,drumH=8,yCorn=y0+drumH,yVault=d.vaultY||42,rOcc=d.rOcc||1.15;
     const stucco=new THREE.MeshStandardMaterial({color:0xf3eadc,roughness:.42,metalness:0,side:THREE.DoubleSide});
-    this._ellipseMolding(d.cx,y0-.02,d.cz,r+.04,r+.04,.1,seg);
+    this._ovalBayPendentives({...d,drop:d.drop||6.7,ax:d.ax||r*1.15,az:d.az||r*1.15},imgs);
+    this._ellipseMolding(d.cx,y0,d.cz,r+.02,r+.02,.1,seg);
     {const drum=new THREE.Mesh(new THREE.CylinderGeometry(r*.98,r*.98,drumH,seg,1,true),stucco);drum.position.set(d.cx,y0+drumH/2,d.cz);this.s.add(drum)}
     const glow=new THREE.MeshBasicMaterial({color:new THREE.Color(1.12,1.06,.95),toneMapped:false,side:THREE.DoubleSide});
     const panes=[],dummy=new THREE.Object3D(),yC=y0+drumH*.5,winH=drumH*.55;
@@ -306,7 +312,7 @@ export class Basilica{
     this._ellipseMolding(d.cx,yCorn,d.cz,r,r,.1,seg);
     const capH=Math.max(6,yVault-2-yCorn);
     const g=new THREE.LatheGeometry(Array.from({length:13},(_,i)=>{const th=i/12*Math.acos(rOcc/r);return new THREE.Vector2(r*Math.cos(th),yCorn+capH*Math.sin(th))}),seg);
-    g.translate(d.cx,0,d.cz);this._domeShellUV(g,d,rOcc);
+    g.translate(d.cx,0,d.cz);this._vaultUV(g,d,rOcc);
     const map=d.img&&imgs[d.img],mat=map?new THREE.MeshStandardMaterial({map,roughness:.55,metalness:.05,side:THREE.DoubleSide}):new THREE.MeshStandardMaterial({map:T.tex(T.minorCoffers()),roughness:.4,metalness:.25,side:THREE.DoubleSide});
     this.add(g,mat,{recv:false});
     this._smallLantern(d.cx,yCorn+capH*Math.sin(Math.acos(rOcc/r)),d.cz,rOcc);
