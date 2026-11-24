@@ -1,6 +1,6 @@
 // St Peter's Basilica interior, in metres. Origin: centre of the crossing at floor level; +z towards the entrance, -z towards the apse.
 import * as THREE from 'three';
-import * as T from './textures.js?v=58';
+import * as T from './textures.js?v=59';
 const V=(x,y,z)=>new THREE.Vector3(x,y,z),PI=Math.PI;
 export const D={NHW:13,ENTR:126,CROSS:20.75,PIER:31,BAY:23.75,ARCH_HW:6.5,ARCH_SPR:15,SPR:33.5,DOME_R:20.75,APSE_C:-47,TRANS_C:55.5,AISLE0:19,AISLE1:31,AISLE_H:22};
 export const archCentres=[0,1,2,3].map(k=>D.PIER+D.BAY*(k+.5));
@@ -116,6 +116,161 @@ export class Basilica{
   // map a 0–1 uv mesh onto one row of the inscription atlas (optional u-range for a continuous run)
   _friezeUV(geo,row,u0=0,u1=1,flipU=false){const U=geo.attributes.uv,n=this.friezeN,v0=(n-row-1)/n,v1=(n-row)/n,pad=(v1-v0)*.08;
     for(let i=0;i<U.count;i++){const u=U.getX(i),v=U.getY(i);U.setXY(i,u0+(flipU?1-u:u)*(u1-u0),v0+pad+v*(v1-v0-2*pad))}U.needsUpdate=true;return geo}
+  // merge Box/Shape geometries into one (for instanced coffer frames)
+  _mergeGeos(geos){const pos=[],nrm=[],uv=[],idx=[];let base=0;
+    for(const g of geos){g.computeVertexNormals();const P=g.attributes.position,N=g.attributes.normal,U=g.attributes.uv,I=g.index;
+      for(let i=0;i<P.count;i++){pos.push(P.getX(i),P.getY(i),P.getZ(i));nrm.push(N.getX(i),N.getY(i),N.getZ(i));uv.push(U?U.getX(i):0,U?U.getY(i):0)}
+      if(I)for(let i=0;i<I.count;i++)idx.push(I.getX(i)+base);else for(let i=0;i<P.count;i++)idx.push(base+i);
+      base+=P.count;g.dispose?.()}
+    const o=new THREE.BufferGeometry();o.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));o.setAttribute('normal',new THREE.Float32BufferAttribute(nrm,3));o.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));o.setIndex(idx);o.computeVertexNormals();return o}
+  // a square frame made of four boxes in the XZ plane, thickness along +Y (into the vault)
+  _frameBoxes(W,H,t,y,thick,list){const hx=W/2,hz=H/2;
+    const mk=(w,h,d,x,y0,z)=>{const g=new THREE.BoxGeometry(w,d,h);g.translate(x,y0+d/2,z);list.push(g)};
+    mk(W,t,thick,0,y,-hz+t/2);mk(W,t,thick,0,y,hz-t/2);mk(t,H-2*t,thick,-hx+t/2,y,0);mk(t,H-2*t,thick,hx-t/2,y,0)}
+  _vaultPanelTex(){const c=document.createElement('canvas');c.width=c.height=256;const g=c.getContext('2d');
+    g.fillStyle='#c9a04c';g.fillRect(0,0,256,256);
+    g.fillStyle='#efe3c4';g.fillRect(14,14,228,228);
+    g.strokeStyle='#b8893a';g.lineWidth=8;g.strokeRect(18,18,220,220);g.lineWidth=2;g.strokeRect(28,28,200,200);
+    g.strokeStyle='#c9a04c';g.lineWidth=3;
+    g.beginPath();g.moveTo(48,48);g.lineTo(208,208);g.moveTo(208,48);g.lineTo(48,208);g.stroke();
+    g.fillStyle='#d4b56a';
+    for(let i=0;i<8;i++){const a=i/8*Math.PI*2;g.save();g.translate(128,128);g.rotate(a);
+      g.beginPath();g.ellipse(0,-36,16,28,0,0,7);g.fill();g.restore()}
+    g.fillStyle='#b8893a';g.beginPath();g.arc(128,128,18,0,7);g.fill();
+    g.fillStyle='#f0d78a';g.beginPath();g.arc(128,128,8,0,7);g.fill();
+    return c}
+  // Modelled gilt rosette (the Mücke ceiling photo is too oblique to map onto a well). Not a photograph of one coffer.
+  _rosetteTex(){const S=256,c=document.createElement('canvas');c.width=c.height=S;const g=c.getContext('2d'),C=S/2;
+    g.fillStyle='#6a4a1c';g.fillRect(0,0,S,S);
+    const rg=g.createRadialGradient(C,C,10,C,C,C);rg.addColorStop(0,'#8a5a20');rg.addColorStop(1,'#5a3a14');
+    g.fillStyle=rg;g.beginPath();g.arc(C,C,C-2,0,7);g.fill();
+    for(let ring=0;ring<3;ring++){const n=8+ring*8,rr=26+ring*28,len=36-ring*6;
+      for(let i=0;i<n;i++){const a=i/n*Math.PI*2+(ring?Math.PI/n:0);
+        g.save();g.translate(C,C);g.rotate(a);
+        g.fillStyle=ring===0?'#f7e7a8':(ring===1?'#e8c86a':'#d4b56a');
+        g.beginPath();g.ellipse(0,-rr,12-ring*2,len,0,0,7);g.fill();g.restore()}}
+    g.fillStyle='#c9a04c';g.beginPath();g.arc(C,C,24,0,7);g.fill();
+    g.fillStyle='#f7e7a8';g.beginPath();g.arc(C,C,14,0,7);g.fill();
+    g.fillStyle='#b8893a';g.beginPath();g.arc(C,C,6,0,7);g.fill();
+    return c}
+  _piusRoundelTex(){const S=1024,c=document.createElement('canvas');c.width=c.height=S;const g=c.getContext('2d'),C=S/2;
+    g.fillStyle='#c9a24e';g.beginPath();g.arc(C,C,C-4,0,7);g.fill();
+    g.fillStyle='#efe3c4';g.beginPath();g.arc(C,C,C*0.80,0,7);g.fill();
+    g.fillStyle='#4a3010';g.beginPath();g.arc(C,C,C*0.62,0,7);g.fill();
+    // Braschi eagle, modelled stand-in (not a photograph). Large heraldic silhouette so it reads from the floor.
+    const ink='#1a1008',gold='#f3dd9a';
+    const paint=fn=>{g.beginPath();fn();g.fillStyle=gold;g.fill();g.strokeStyle=ink;g.lineWidth=7;g.lineJoin='round';g.lineCap='round';g.stroke()};
+    g.save();g.translate(C,C+36);
+    paint(()=>{g.moveTo(-16,-30);g.quadraticCurveTo(-160,-140,-250,10);g.quadraticCurveTo(-200,30,-120,20);g.quadraticCurveTo(-70,8,-16,36);g.closePath()});
+    paint(()=>{g.moveTo(16,-30);g.quadraticCurveTo(160,-140,250,10);g.quadraticCurveTo(200,30,120,20);g.quadraticCurveTo(70,8,16,36);g.closePath()});
+    paint(()=>{g.ellipse(0,16,48,88,0,0,7)});
+    paint(()=>{g.moveTo(-22,90);g.quadraticCurveTo(-50,150,0,170);g.quadraticCurveTo(50,150,22,90);g.closePath()});
+    paint(()=>{g.arc(-18,-92,30,0,7)});
+    g.fillStyle=ink;g.beginPath();g.moveTo(6,-96);g.lineTo(44,-84);g.lineTo(6,-74);g.closePath();g.fill();
+    g.fillStyle='#1a2a6a';g.beginPath();g.moveTo(-20,0);g.lineTo(20,0);g.lineTo(20,28);g.lineTo(0,44);g.lineTo(-20,28);g.closePath();g.fill();
+    g.strokeStyle=gold;g.lineWidth=4;g.stroke();
+    g.restore();
+    // papal tiara above the head, inside the brown field
+    g.fillStyle=gold;g.strokeStyle=ink;g.lineWidth=5;
+    g.beginPath();g.moveTo(C-40,C-168);g.lineTo(C+40,C-168);g.lineTo(C+24,C-214);g.lineTo(C-24,C-214);g.closePath();g.fill();g.stroke();
+    g.fillRect(C-44,C-174,88,12);g.fillRect(C-32,C-196,64,10);g.fillRect(C-18,C-216,36,10);
+    g.beginPath();g.arc(C,C-228,11,0,7);g.fill();g.stroke();
+    g.fillStyle='#3a2410';g.font='bold 58px "Times New Roman",Georgia,serif';g.textAlign='center';g.textBaseline='middle';
+    const text='PIVS · SEXTVS · P · M · ORNAVIT · ',R=C*0.71;
+    for(let i=0;i<text.length;i++){const a=-Math.PI/2+i/text.length*Math.PI*2;g.save();g.translate(C+Math.cos(a)*R,C+Math.sin(a)*R);g.rotate(a+Math.PI/2);g.fillText(text[i],0,0);g.restore()}
+    return c}
+  // 3D coffered barrel. Counted from photographs: 13 coffers across the arc, 7 along each nave bay, a checkerboard of
+  // octagonal rosette wells and rectangular panels. Transverse ribs sit on the pilaster lines. The central roundel is
+  // Pius VI's arms (late 18th-century decoration of Maderno's vault). Exact bay of the roundel and the last spring-line
+  // count (13 vs 15) are from photos, not a surveyed plan.
+  _cofferedBarrel(parent,z0,z1,opts={}){const {ribs=false,medallion=false}=opts;
+    const {NHW,SPR,PIER,BAY}=D,R=opts.R??NHW,y0=opts.y0??SPR,nAcross=opts.nAcross||13,depth=.48,ribW=.55;
+    const span=z1-z0,nAlong=opts.nAlong||Math.max(4,Math.round(span/((Math.PI*R)/nAcross)));
+    const cellA=Math.PI*R/nAcross,cellZ=span/nAlong,cW=cellA*.92,cH=cellZ*.92;
+    const cream=new THREE.MeshStandardMaterial({color:0xe6d9c4,roughness:.38,metalness:.04}),gold=this.mat.gold;
+    const frames=[],golds=[];
+    this._frameBoxes(cW,cH,cellA-cW+.16, -.02,.07,frames);
+    this._frameBoxes(cW*.84,cH*.84,.11,.04,.12,golds);
+    this._frameBoxes(cW*.70,cH*.70,.08,.16,.14,golds);
+    const frameGeo=this._mergeGeos(frames),goldGeo=this._mergeGeos(golds);
+    const octR=Math.min(cW,cH)*.32;
+    const octSh=new THREE.Shape();for(let k=0;k<8;k++){const a=Math.PI/8+k*Math.PI/4,x=Math.cos(a)*octR,z=Math.sin(a)*octR;k?octSh.lineTo(x,z):octSh.moveTo(x,z)}octSh.closePath();
+    const octGeo=new THREE.ShapeGeometry(octSh,1);octGeo.rotateX(-Math.PI/2);octGeo.translate(0,depth,0);
+    const rectGeo=new THREE.PlaneGeometry(cW*.58,cH*.58);rectGeo.rotateX(-Math.PI/2);rectGeo.translate(0,depth,0);
+    const rosTex=T.tex(this._rosetteTex(),{wrap:false,aniso:4});
+    const rosMat=new THREE.MeshStandardMaterial({map:rosTex,emissiveMap:rosTex,emissive:0xffffff,emissiveIntensity:.45,roughness:.55,metalness:0,side:THREE.DoubleSide});
+    const panMat=new THREE.MeshStandardMaterial({map:T.tex(this._vaultPanelTex(),{wrap:false}),roughness:.55,metalness:.08,side:THREE.DoubleSide});
+    const dummy=new THREE.Object3D();
+    const X=new THREE.Vector3(),Y=new THREE.Vector3(),Z=new THREE.Vector3(0,0,1);
+    const medZ=medallion?PIER+BAY*1.5:1e9,medR=cellA*1.15;
+    const placesOct=[],placesRect=[];
+    for(let i=0;i<nAcross;i++)for(let j=0;j<nAlong;j++){
+      const th=(i+.5)/nAcross*Math.PI,z=z0+(j+.5)*cellZ;
+      if(medallion&&Math.hypot((th-Math.PI/2)*R,z-medZ)<medR)continue;
+      const cth=Math.cos(th),sth=Math.sin(th);
+      dummy.position.set(R*cth,y0+R*sth,z);
+      X.set(sth,-cth,0);Y.set(cth,sth,0);Z.set(0,0,1);
+      dummy.matrix.makeBasis(X,Y,Z);dummy.matrix.setPosition(dummy.position);dummy.matrix.decompose(dummy.position,dummy.quaternion,dummy.scale);
+      const oct=((i+j)&1)===0;
+      (oct?placesOct:placesRect).push(dummy.matrix.clone());
+    }
+    const inst=(geo,mat,mats)=>{const mesh=new THREE.InstancedMesh(geo,mat,mats.length);mats.forEach((m,i)=>mesh.setMatrixAt(i,m));mesh.instanceMatrix.needsUpdate=true;mesh.castShadow=false;mesh.receiveShadow=true;parent.add(mesh);return mesh};
+    inst(frameGeo,cream,placesOct.concat(placesRect));
+    inst(goldGeo,gold,placesOct.concat(placesRect));
+    inst(octGeo,rosMat,placesOct);
+    inst(rectGeo,panMat,placesRect);
+    if(placesOct.length){
+      const torus=new THREE.TorusGeometry(octR*.88,octR*.035,6,16);torus.rotateX(-Math.PI/2);torus.translate(0,depth-.015,0);
+      const boss=new THREE.SphereGeometry(octR*.07,8,6);boss.translate(0,depth-.03,0);
+      inst(torus,gold,placesOct);inst(boss,gold,placesOct);
+    }
+    // backing faces the nave (surf() normals already point inward). Fills the medallion gap and any hairline.
+    const back=new THREE.Mesh(surf((u,v)=>V(Math.cos(u*PI)*(R+depth+.02),y0+Math.sin(u*PI)*(R+depth+.02),z0+v*span),48,Math.max(8,nAlong)),new THREE.MeshStandardMaterial({color:0xc9a04c,roughness:.5,metalness:.2}));
+    back.receiveShadow=true;parent.add(back);
+    if(ribs){const zRibs=opts.ribZs||[];if(!opts.ribZs){for(let z=Math.ceil((z0+1e-3)/BAY)*BAY;z<z1-1e-3;z+=BAY)if(z>z0+1&&z<z1-1)zRibs.push(z)}
+      zRibs.forEach(z=>{this._vaultRib3D(parent,z,ribW,R,y0)})}
+    if(medallion)this._piusRoundel(parent,R,y0,medZ,medR*2.15);
+    return {nAcross,nAlong,cellA,cellZ}
+  }
+  _vaultRib3D(parent,z,w=.6,R0,ySpr){const {NHW,SPR}=D,R=(R0??NHW)-.04,y0=ySpr??SPR,gold=this.mat.gold,cream=new THREE.MeshStandardMaterial({color:0xe6d9c4,roughness:.38,metalness:.04});
+    const rib=(r,ww,mat)=>{const g=surf((u,v)=>V(Math.cos(u*PI)*r,y0+Math.sin(u*PI)*r,z-ww/2+v*ww),48,2);const o=new THREE.Mesh(g,mat);o.receiveShadow=true;parent.add(o)};
+    rib(R,.7,cream);rib(R-.06,.35,gold);
+    const lip=surf((u,v)=>{const r=R-0.02-v*.10;return V(Math.cos(u*PI)*r,y0+Math.sin(u*PI)*r,z)},48,2);
+    const o=new THREE.Mesh(lip,gold);o.receiveShadow=true;parent.add(o)}
+  _piusRoundel(parent,R,y0,z,diam){const rad=diam/2,gold=this.mat.gold;
+    const g=new THREE.Group();
+    // plate first, slightly into the vault, covers the skipped coffers; disc in front, facing down into the nave
+    const plate=new THREE.Mesh(new THREE.CircleGeometry(rad,48),gold);
+    plate.rotation.x=Math.PI/2;g.add(plate);
+    const disc=new THREE.Mesh(new THREE.CircleGeometry(rad*.86,48),new THREE.MeshStandardMaterial({map:T.tex(this._piusRoundelTex(),{wrap:false,aniso:4}),roughness:.62,metalness:0}));
+    disc.rotation.x=Math.PI/2;disc.position.y=-.05;g.add(disc);
+    const rim=new THREE.Mesh(new THREE.TorusGeometry(rad*.86,.08,8,48),gold);rim.rotation.x=Math.PI/2;rim.position.y=-.04;g.add(rim);
+    const rim2=new THREE.Mesh(new THREE.TorusGeometry(rad*.68,.035,6,48),gold);rim2.rotation.x=Math.PI/2;rim2.position.y=-.06;g.add(rim2);
+    g.position.set(0,y0+R-0.02,z);
+    parent.add(g)}
+  // 3D coffers on a half-tube soffit (nave arcade into the aisle, axis along X)
+  _soffitCoffers(parent,s,zc){const {NHW,ARCH_HW:R,ARCH_SPR:y0}=D,depth=6,nU=5,nV=3,sink=.22;
+    const cream=this.mat.marbleW,gold=this.mat.gold;
+    const cW= (Math.PI*R)/nU*.82,cH=(depth/nV)*.82;
+    const frames=[],golds=[];this._frameBoxes(cW,cH,.14,-.06,.08,frames);this._frameBoxes(cW*.78,cH*.78,.08,.02,.10,golds);
+    const frameGeo=this._mergeGeos(frames),goldGeo=this._mergeGeos(golds);
+    const bot=new THREE.PlaneGeometry(cW*.6,cH*.6);bot.rotateX(-Math.PI/2);bot.translate(0,sink,0);
+    const botMat=new THREE.MeshStandardMaterial({color:0xc9a04c,roughness:.45,metalness:.25,side:THREE.DoubleSide});
+    const dummy=new THREE.Object3D(),X=new THREE.Vector3(),Y=new THREE.Vector3(),Z=new THREE.Vector3(),mats=[];
+    for(let i=0;i<nU;i++)for(let j=0;j<nV;j++){
+      const u=(i+.5)/nU,v=(j+.5)/nV,th=u*Math.PI,x=s*(NHW+v*depth),y=y0+Math.sin(th)*R,z=zc+Math.cos(th)*R;
+      // basis: X along the arch (d/dθ), Z along the aisle (d/dv / axis), Y outward
+      X.set(0,Math.cos(th),-Math.sin(th)); // d/dθ of (0, sinθ R, cosθ R)
+      Z.set(s,0,0);
+      Y.set(0,Math.sin(th),Math.cos(th));
+      if(s<0)Z.negate();
+      dummy.position.set(x,y,z);dummy.matrix.makeBasis(X,Y,Z);dummy.matrix.setPosition(dummy.position);dummy.matrix.decompose(dummy.position,dummy.quaternion,dummy.scale);
+      mats.push(dummy.matrix.clone());
+    }
+    const inst=(geo,mat)=>{const mesh=new THREE.InstancedMesh(geo,mat,mats.length);mats.forEach((m,i)=>mesh.setMatrixAt(i,m));mesh.instanceMatrix.needsUpdate=true;mesh.castShadow=false;mesh.receiveShadow=true;parent.add(mesh)};
+    inst(frameGeo,cream);inst(goldGeo,gold);inst(bot,botMat);
+  }
+
   // semicircular barrel: spring line exactly on the entablature top (y = SPR), radius the nave half-width
   // so the vault meets the wall and the crossing arch with no gap. Coffers: 4 along each bay, 7 across the arc.
   _barrelGeo(z0,z1){const {NHW,SPR,PIER,BAY}=D,R=NHW,y0=SPR;
@@ -136,7 +291,8 @@ export class Basilica{
       this.add(wallShape(outer,holes,(a,y)=>V(s*NHW,y,a)),m.trav);
       // arch soffits through the piers (to the aisle) and jambs
       for(const zc of archCentres){
-        this.add(surf((u,v)=>V(s*(NHW+v*6),ARCH_SPR+Math.sin(u*PI)*ARCH_HW,zc+Math.cos(u*PI)*ARCH_HW),24,1,3,1),m.cofferRed);
+        this.add(surf((u,v)=>V(s*(NHW+v*6),ARCH_SPR+Math.sin(u*PI)*(ARCH_HW+.28),zc+Math.cos(u*PI)*(ARCH_HW+.28)),24,1,3,1),m.travWarm);
+        this._soffitCoffers(this.s,s,zc);
         for(const e of [-1,1])this.add(new THREE.PlaneGeometry(6,ARCH_SPR).translate(0,ARCH_SPR/2,0).rotateY(0),m.trav).position.set(s*(NHW+3),0,zc+e*ARCH_HW);
         // archivolt: gilded moulding round the arch
         const t=new THREE.Mesh(new THREE.TorusGeometry(ARCH_HW+.35,.22,6,32,PI),m.gold);t.rotation.y=PI/2;t.position.set(s*(NHW-.05),ARCH_SPR,zc);this.s.add(t);
@@ -161,9 +317,8 @@ export class Basilica{
       this.box(2.0,1.4,ENTR-PIER,s*(NHW-1.0),32.4,(ENTR+PIER)/2,m.travWarm,{cast:false});
       this.box(2.3,.4,ENTR-PIER,s*(NHW-1.15),33.3,(ENTR+PIER)/2,m.gold);
     }
-    // barrel vault springs on the cornice; coffers and transverse ribs register to the pilasters
-    this.add(this._barrelGeo(PIER,ENTR),m.coffer);
-    for(let k=1;k<=3;k++)this.add(this._vaultRib(PIER+D.BAY*k),m.cofferRed);
+    // barrel vault: 3D coffers (Pius VI, late 18th c.). 13 across the arc, 7 per bay, checkerboard of octagonal rosettes and rectangular panels.
+    this._cofferedBarrel(this.s,PIER,ENTR,{ribs:true,medallion:true,nAlong:28});
   }
   _window(p,w,h,rot,arched){ // bright glass (blooms) in a stucco frame
     const sh=new THREE.Shape();sh.moveTo(-w/2,-h/2);sh.lineTo(w/2,-h/2);if(arched){sh.lineTo(w/2,h/2-w/2);sh.absarc(0,h/2-w/2,w/2,0,PI,false)}else sh.lineTo(w/2,h/2),sh.lineTo(-w/2,h/2);sh.lineTo(-w/2,-h/2);
@@ -382,7 +537,7 @@ export class Basilica{
     for(let q=0;q<4;q++){const rot=q*PI/2,g=new THREE.Group();g.rotation.y=rot;this.s.add(g);
       const add=(geo,mat)=>{const o=new THREE.Mesh(geo,mat);o.receiveShadow=true;g.add(o);return o};
       for(const s of [-1,1])add(new THREE.PlaneGeometry(PIER-C,ASPR).translate(0,ASPR/2,0).rotateY(PI/2),m.flute).position.set(s*AR,0,(C+PIER)/2);
-      add(surf((u,v)=>V(Math.cos(u*PI)*AR,ASPR+Math.sin(u*PI)*AR,C+v*(PIER-C)),48,6,8,2),m.coffer);
+      this._cofferedBarrel(g,C,PIER,{R:AR,y0:ASPR,nAcross:11,ribs:false});
       // step face between the tunnel and the wider arm (at z=PIER)
       add(wallShape(archOutline(13,D.SPR),[archOutline(AR,ASPR)],(a,y)=>V(a,y,PIER),[4,4]),m.trav);
       // gilded archivolt on the crossing face
@@ -538,8 +693,7 @@ export class Basilica{
         const lip=new THREE.Mesh(new THREE.BoxGeometry(2.3,.4,len),m.gold);lip.position.set(s*(NHW-1.15),33.3,PIER+len/2);g.add(lip);
         const u0=kind==='apse'?(s>0?0: (len+Math.PI*NHW)/run):0,u1=kind==='apse'?(s>0?len/run:1):1;
         const fr=new THREE.Mesh(this._friezeUV(new THREE.PlaneGeometry(len,1.7),kind==='apse'?3:4,u0,u1),this.friezeMat());fr.rotation.y=s>0?-PI/2:PI/2;fr.position.set(s*(NHW-.02),30.3,PIER+len/2);g.add(fr);}
-      add(this._barrelGeo(PIER,end),m.coffer);
-      add(this._vaultRib(PIER+2.6),m.cofferRed);add(this._vaultRib(end-2.6),m.cofferRed);
+      this._cofferedBarrel(g,PIER,end,{ribs:true,ribZs:[PIER+2.6,end-2.6]});
       // semicircular apse end: wall + coffered half dome
       const wallM=m.trav,apse=add(surf((u,v)=>{const a=-PI/2+u*PI;return V(Math.sin(a)*NHW,v*SPR,end+Math.cos(a)*NHW)},48,8,8,SPR/4),wallM);
       add(surf((u,v)=>{const a=-PI/2+u*PI,e=v*PI/2;return V(Math.sin(a)*NHW*Math.cos(e),SPR+NHW*Math.sin(e),end+Math.cos(a)*NHW*Math.cos(e))},48,16,6,3),m.coffer);
