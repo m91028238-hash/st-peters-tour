@@ -1,6 +1,6 @@
 // St Peter's Basilica interior, in metres. Origin: centre of the crossing at floor level; +z towards the entrance, -z towards the apse.
 import * as THREE from 'three';
-import * as T from './textures.js?v=57';
+import * as T from './textures.js?v=58';
 const V=(x,y,z)=>new THREE.Vector3(x,y,z),PI=Math.PI;
 export const D={NHW:13,ENTR:126,CROSS:20.75,PIER:31,BAY:23.75,ARCH_HW:6.5,ARCH_SPR:15,SPR:33.5,DOME_R:20.75,APSE_C:-47,TRANS_C:55.5,AISLE0:19,AISLE1:31,AISLE_H:22};
 export const archCentres=[0,1,2,3].map(k=>D.PIER+D.BAY*(k+.5));
@@ -83,7 +83,10 @@ export class Basilica{
      ks.forEach((k,i)=>{if(ims[i])o[k]={img:ims[i],crop:A[k][1],col:A[k][2]}});this._altars(o);}
     {const A=['transfig','jerome','sebastian','baptism','choir','present','leo','alex7','clem13','pius7'],ims=await Promise.all(A.map(k=>L('art_'+k+'.jpg'))),o={};A.forEach((k,i)=>{if(ims[i])o[k]=ims[i]});this._artworks(o);}
     this._dome(dome,lanternGod);this._apsePhoto(apse);this._entrance();this._piers(panel);
-    this._baldacchino();this._confessio();this._peter();
+    this._baldacchino();this._confessio();
+    {const names=['peter_brocade.jpg','peter_canopy.jpg','peter_tablet.jpg','peter_piusix.png','peter_throne.jpg','peter_canopy_side.jpg'],ims=await Promise.all(names.map(L));
+      const tx=im=>im?T.tex(im,{wrap:false,aniso:this.r.capabilities.getMaxAnisotropy()}):null;
+      this._peter({brocade:tx(ims[0]),canopy:tx(ims[1]),tablet:tx(ims[2]),piusix:tx(ims[3]),throne:tx(ims[4]),canopySide:tx(ims[5])});}
     this.onProgress('The statues…');
     await Promise.all([this._statues(),this._saints()]);
     this.onProgress('The Pietà…');
@@ -678,27 +681,114 @@ export class Basilica{
       if(i%1===0){const l=new THREE.Mesh(new THREE.SphereGeometry(.09,8,6),m.gold);l.position.set(a.x,1.45,a.z);g.add(l);const st=new THREE.Mesh(new THREE.CylinderGeometry(.015,.015,.3,4),m.gold);st.position.set(a.x,1.25,a.z);g.add(st);
         const f=new THREE.Sprite(lampM);f.scale.set(.32,.4,1);f.position.set(a.x,1.6,a.z);g.add(f)}}
   }
-  // ---------- bronze St Peter (Arnolfo di Cambio, attrib.) against the pier of St Longinus ----------
-  _peter(){const g=new THREE.Group();this.s.add(g);const x=D.NHW-.5,z=D.PIER+6.0; // nave side of the right crossing pier
+  _peterAlabaster(){const c=document.createElement('canvas');c.width=c.height=512;const g=c.getContext('2d');
+    let s=1307;const rnd=()=>{s=(s*16807)%2147483647;return s/2147483647};
+    const bg=g.createLinearGradient(0,0,40,512);bg.addColorStop(0,'#f3ead8');bg.addColorStop(.45,'#e6d3b0');bg.addColorStop(1,'#efe4cc');
+    g.fillStyle=bg;g.fillRect(0,0,512,512);
+    for(let i=0;i<48;i++){const x=rnd()*512,y=rnd()*512,rx=30+rnd()*100,ry=12+rnd()*36;
+      g.save();g.translate(x,y);g.rotate((rnd()-.5)*.5);g.beginPath();g.ellipse(0,0,rx,ry,0,0,7);
+      g.fillStyle=`rgba(${170+rnd()*50|0},${140+rnd()*40|0},${95+rnd()*30|0},${(.07+rnd()*.16).toFixed(3)})`;g.fill();g.restore()}
+    for(let i=0;i<7;i++){let x=rnd()*512,y=rnd()*512;g.beginPath();g.moveTo(x,y);
+      for(let k=0;k<9;k++){x+=24+(rnd()-.4)*36;y+=(rnd()-.5)*30;g.lineTo(x,y)}
+      g.strokeStyle=`rgba(130,110,80,${(.1+rnd()*.18).toFixed(3)})`;g.lineWidth=1+rnd()*2.5;g.stroke()}
+    return c}
+  _peterNero(){const c=document.createElement('canvas');c.width=c.height=512;const g=c.getContext('2d');
+    let s=2203;const rnd=()=>{s=(s*16807)%2147483647;return s/2147483647};
+    g.fillStyle='#0c0c0e';g.fillRect(0,0,512,512);
+    for(let i=0;i<36;i++){g.strokeStyle=`rgba(${200+rnd()*55|0},${200+rnd()*55|0},${204+rnd()*50|0},${(.22+rnd()*.5).toFixed(3)})`;g.lineWidth=.8+rnd()*4.5;
+      const x=rnd()*512,y=rnd()*512;g.beginPath();g.moveTo(x,y);
+      g.bezierCurveTo(x+40+(rnd()-.5)*80,y-50,x+120,y+40+(rnd()-.5)*60,x+200+(rnd()-.5)*40,y-20);g.stroke()}
+    return c}
+  _peterJasper(){const c=document.createElement('canvas');c.width=c.height=256;const g=c.getContext('2d');
+    let s=904;const rnd=()=>{s=(s*16807)%2147483647;return s/2147483647};
+    g.fillStyle='#2a332c';g.fillRect(0,0,256,256);
+    for(let i=0;i<120;i++){g.fillStyle=`rgba(${80+rnd()*50|0},${90+rnd()*40|0},${70+rnd()*30|0},${.15+rnd()*.35})`;g.fillRect(rnd()*256,rnd()*256,1+rnd()*3,1+rnd()*2)}
+    for(let i=0;i<10;i++){g.strokeStyle=`rgba(20,25,20,${.15+rnd()*.2})`;g.lineWidth=4+rnd()*10;g.beginPath();g.moveTo(0,rnd()*256);g.lineTo(256,rnd()*256);g.stroke()}
+    return c}
+  // pierced gilt nimbus: outer ring and an inner sunburst, as on the bronze
+  _peterHalo(R){const sh=new THREE.Shape();sh.absellipse(0,0,R,R,0,2*PI,false);
+    const inn=new THREE.Path();inn.absellipse(0,0,R*.18,R*.18,0,2*PI,true);sh.holes.push(inn);
+    const n=16;for(let i=0;i<n;i++){const a=i/n*2*PI,b=(i+.5)/n*2*PI,p=new THREE.Path(),r0=R*.26,r1=R*.78;
+      p.moveTo(Math.cos(a)*r0,Math.sin(a)*r0);p.lineTo(Math.cos(a)*r1,Math.sin(a)*r1);p.lineTo(Math.cos(b)*r1,Math.sin(b)*r1);p.lineTo(Math.cos(b)*r0,Math.sin(b)*r0);p.closePath();sh.holes.push(p)}
+    const gold=new THREE.MeshStandardMaterial({color:0xe0b45a,metalness:.88,roughness:.28,side:THREE.DoubleSide,emissive:0x7a5018,emissiveIntensity:.28});
+    const disc=new THREE.Mesh(new THREE.ShapeGeometry(sh,48),gold);
+    const rim=new THREE.Mesh(new THREE.TorusGeometry(R,.016,6,48),gold);
+    const inner=new THREE.Mesh(new THREE.TorusGeometry(R*.22,.01,6,24),gold);
+    const o=new THREE.Group();o.add(disc,rim,inner);return o}
+  // dark barley-twist stands that stand on the pier dado, left and right of the pedestal
+  _peterTwistStand(g,x,z){const dark=new THREE.MeshStandardMaterial({color:0x1c1612,roughness:.42,metalness:.08});
+    const base=new THREE.Mesh(new THREE.BoxGeometry(.36,.07,.36),this.mat.marbleW||dark);base.position.set(x,.035,z);g.add(base);
+    const pl=new THREE.Mesh(new THREE.BoxGeometry(.30,.06,.30),dark);pl.position.set(x,.10,z);g.add(pl);
+    const n=16,h=0.92;for(let i=0;i<n;i++){const y=.13+h*(i+.5)/n,m=new THREE.Mesh(new THREE.BoxGeometry(.18,.075,.18),dark);
+      m.rotation.y=i*.48;m.position.set(x,y,z);g.add(m)}
+    const cap=new THREE.Mesh(new THREE.CylinderGeometry(.11,.12,.05,12),dark);cap.position.set(x,.13+h,.0+z);g.add(cap)}
+  // ---------- bronze St Peter (Arnolfo di Cambio, attrib.) on Marchionni's 1757 pedestal, against the pier of St Longinus ----------
+  _peter(imgs){const g=new THREE.Group();this.s.add(g);const x=D.NHW-.5,z=D.PIER+6.0; // nave side of the right crossing pier
     g.position.set(x,0,z);g.rotation.y=-PI/2;
-    const ped=new THREE.MeshStandardMaterial({map:T.tex(T.travertine(this.M,{tint:'rgba(235,225,205,.25)',joints:false})),roughness:.3});
-    const p=new THREE.Mesh(new THREE.BoxGeometry(2.4,1.7,1.4),ped);p.position.set(0,.85,.4);p.castShadow=p.receiveShadow=true;g.add(p);this.casters.push(p);
-    const fr=new THREE.Mesh(new THREE.BoxGeometry(3.3,4.6,.3),this.mat.travWarm);fr.position.set(0,3.6,-.25);g.add(fr);
-    // red-and-gold brocade panel behind the statue (the real one is a mosaic imitating a hanging)
-    const bc=document.createElement('canvas');bc.width=256;bc.height=384;{const c=bc.getContext('2d');c.fillStyle='#6e1a16';c.fillRect(0,0,256,384);c.strokeStyle='rgba(214,170,90,.55)';c.lineWidth=3;
-      for(let y=0;y<384;y+=64)for(let x0=0;x0<256;x0+=64){const cx=x0+(y/64%2)*32+16,cy=y+32;c.beginPath();c.ellipse(cx,cy,14,22,0,0,6.3);c.stroke();c.beginPath();c.moveTo(cx,cy-30);c.lineTo(cx,cy+30);c.stroke()}
-      c.strokeStyle='#c9a24e';c.lineWidth=10;c.strokeRect(5,5,246,374)}
-    const ph=new THREE.Mesh(new THREE.PlaneGeometry(2.3,3.4),new THREE.MeshStandardMaterial({map:T.tex(bc,{wrap:false}),roughness:.6}));ph.position.set(0,1.7+1.75,-.09);g.add(ph);this.peterG=g;
-    // marble throne
-    const S=1.3,tz=.35,th=this.mat.marbleW;this.peterS=S;
-    const bx=(w,h,d,x0,y0,z0,m=th)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x0,y0,z0);o.castShadow=o.receiveShadow=true;g.add(o);return o};
-    bx(.86*S,.44*S,.62*S,0,1.7+.22*S,tz-.13*S);bx(.86*S,.95*S,.1*S,0,1.7+.9*S,tz-.47*S);
-    for(const sx of[-1,1]){bx(.07*S,.06*S,.5*S,sx*.45*S,1.7+.66*S,tz-.2*S);bx(.06*S,.22*S,.06*S,sx*.45*S,1.7+.53*S,tz+.02*S);const k=new THREE.Mesh(new THREE.SphereGeometry(.06*S,12,8),this.mat.gold);k.position.set(sx*.44*S,1.7+1.4*S,tz-.47*S);g.add(k)}
-    const halo=new THREE.Mesh(new THREE.TorusGeometry(.2*S,.012*S,8,48),this.mat.gold);halo.position.set(0,1.7+1.31*S,tz-.19*S);g.add(halo);
-    const hd=new THREE.Mesh(new THREE.CircleGeometry(.2*S,48),new THREE.MeshStandardMaterial({color:0x8a6a32,metalness:.6,roughness:.5,transparent:true,opacity:.35}));hd.position.copy(halo.position);hd.position.z-=.01;g.add(hd);
-    const arch=new THREE.Mesh(new THREE.TorusGeometry(1.4,.12,6,24,PI),this.mat.gold);arch.position.set(0,4.9,-.05);g.add(arch);
-    {const L=new THREE.PointLight(0xffe2b8,9,7,1.5);L.position.set(0,3.4,3.2);g.add(L);const L2=new THREE.PointLight(0xfff0dc,4,6,1.6);L2.position.set(-1.6,2.4,2.2);g.add(L2)}
-    this.peterPos=new THREE.Vector3(x,3.2,z);
+    const add=(o,cast=true)=>{o.castShadow=cast;o.receiveShadow=true;g.add(o);if(cast)this.casters.push(o);return o};
+    const bx=(w,h,d,x0,y0,z0,m,cast=true)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x0,y0,z0);return add(o,cast)};
+    const alb=new THREE.MeshStandardMaterial({map:T.tex(this._peterAlabaster()),roughness:.32,metalness:.02,color:0xfff6e8});
+    const nero=new THREE.MeshStandardMaterial({map:T.tex(this._peterNero()),roughness:.36,color:0xffffff});
+    const jasper=new THREE.MeshStandardMaterial({map:T.tex(this._peterJasper()),roughness:.48});
+    const gold=this.mat.gold,mw=this.mat.marbleW,trav=this.mat.travWarm;
+    // stepped pedestal (Carlo Marchionni, 1757): black-veined socle, cream-veined die with dark inlaid panels in a gilt frame, moulded cornice, top slab.
+    // Height fitted so the feet are at about kissing height; not a surveyed measurement.
+    const hs=.40,hm=.14,hd=.58,hc=.12,ht=.10,ySlab=hs+hm+hd+hc+ht;
+    bx(1.88,hs,1.38,0,hs/2,.18,nero);
+    bx(1.76,hm,1.26,0,hs+hm/2,.16,alb);
+    bx(1.64,hd,1.16,0,hs+hm+hd/2,.14,alb);
+    const yDie=hs+hm+hd/2,zFront=.14+1.16/2;
+    bx(1.12,.42,.02,0,yDie,zFront+.005,gold,false);bx(1.02,.34,.02,0,yDie,zFront+.015,jasper,false);
+    for(const s of[-1,1]){const xs=s*(1.64/2);bx(.02,.42,0.85,xs+s*.015,yDie,.14,gold,false);bx(.02,.34,0.75,xs+s*.025,yDie,.14,jasper,false)}
+    bx(1.86,.05,1.36,0,hs+hm+hd+.025,.16,alb); // projecting lower cornice
+    bx(1.78,hc,1.28,0,hs+hm+hd+hc/2,.16,alb);
+    bx(1.92,.06,1.40,0,hs+hm+hd+hc-.01,.16,alb); // upper cornice overhang
+    bx(1.56,ht,1.12,0,ySlab-ht/2,.22,alb);
+    // carved marble throne: shaped back to about shoulder height, scrolled arms, palmette side relief from a Commons photograph
+    const ty=ySlab;
+    bx(.84,.09,.62,0,ty+.045,.14,mw);
+    const backW=.80,backH=.92;
+    const sh=new THREE.Shape();
+    sh.moveTo(-backW/2,0);sh.lineTo(-backW/2,backH*.72);
+    sh.bezierCurveTo(-backW/2,backH,-backW*.12,backH+.07,0,backH+.07);
+    sh.bezierCurveTo(backW*.12,backH+.07,backW/2,backH,backW/2,backH*.72);
+    sh.lineTo(backW/2,0);sh.closePath();
+    const back=new THREE.Mesh(new THREE.ExtrudeGeometry(sh,{depth:.16,bevelEnabled:true,bevelThickness:.015,bevelSize:.015,bevelSegments:2}),mw);
+    back.position.set(0,ty+.09,-.08);add(back);
+    const cheek=new THREE.MeshStandardMaterial({map:imgs.throne||null,color:imgs.throne?0xffffff:0xe8e0d4,roughness:.45,metalness:0});
+    for(const s of[-1,1]){
+      const ch=new THREE.Mesh(new THREE.BoxGeometry(.08,.90,.42),cheek);
+      ch.position.set(s*(backW/2-.02),ty+.09+.45,.08);add(ch);
+      bx(.11,.07,.50,s*.40,ty+.48,.14,mw);
+      const v=new THREE.Mesh(new THREE.TorusGeometry(.075,.028,8,16,Math.PI),mw);v.rotation.y=PI/2;v.rotation.z=s>0?0:PI;v.position.set(s*.40,ty+.52,.38);add(v);
+      bx(.09,.42,.09,s*.40,ty+.22,.34,mw);
+      const paw=new THREE.Mesh(new THREE.SphereGeometry(.055,10,8),mw);paw.position.set(s*.40,ty+.05,.34);add(paw)}
+    // 1871 brocatello mosaic dossal (photograph, not an invented pattern) in a shallow pier recess. No free-standing posts.
+    const mW=3.15,mH=4.85,mY=ySlab+.2+mH/2,mZ=-.22;
+    if(imgs.brocade){const ph=new THREE.Mesh(new THREE.PlaneGeometry(mW,mH),new THREE.MeshStandardMaterial({map:imgs.brocade,roughness:.5,metalness:.08,side:THREE.DoubleSide}));ph.position.set(0,mY,mZ);add(ph,false)}
+    bx(mW+.08,mH+.08,.03,0,mY,mZ-.02,gold,false); // gilt frame around the mosaic
+    // 1871 wall-mounted gilt canopy: tester roof, photographed front valance, photographed side returns. No legs to the floor.
+    const yCan=ySlab+.2+mH,cW=3.28,cD=.90,cT=.11,valH=.95;
+    bx(cW,cT,cD,0,yCan+cT/2,cD/2-.12,gold); // tester
+    bx(cW-.06,.03,cD-.06,0,yCan-.015,cD/2-.12,gold,false);
+    if(imgs.canopy){const val=new THREE.Mesh(new THREE.BoxGeometry(cW,valH,.04),new THREE.MeshStandardMaterial({map:imgs.canopy,roughness:.4,metalness:.22}));
+      val.position.set(0,yCan-valH/2+.02,cD-.12);add(val,false)}
+    if(imgs.canopySide){const sm=new THREE.MeshStandardMaterial({map:imgs.canopySide,roughness:.4,metalness:.22});
+      for(const s of[-1,1]){const sp=new THREE.Mesh(new THREE.PlaneGeometry(cD,valH),sm);
+        sp.position.set(s*cW/2,yCan-valH/2+.02,cD/2-.12);sp.rotation.y=s*PI/2;add(sp,false)}}
+    else{const burg=new THREE.MeshStandardMaterial({color:0x5a1c2a,roughness:.45,metalness:.15});
+      bx(.04,valH,cD,-cW/2,yCan-valH/2+.02,cD/2-.12,burg,false);bx(.04,valH,cD,cW/2,yCan-valH/2+.02,cD/2-.12,burg,false)}
+    // inscription tablet: PIO IX PONT MAX / QVI PETRI ANNOS / IN PONTIFICATV ROMANO / VNVS AEQVAVIT / CLERVS VATICANVS / SACRAM ORNAVIT SEDEM / XVI KAL QVINT A MDCCCLXXI
+    const tabW=2.2,tabH=1.28,yTab=yCan+cT+.12+tabH/2;
+    bx(tabW+.16,tabH+.16,.10,0,yTab,-.16,gold,false);
+    if(imgs.tablet){const tab=new THREE.Mesh(new THREE.PlaneGeometry(tabW,tabH),new THREE.MeshStandardMaterial({map:imgs.tablet,roughness:.32,metalness:.12}));tab.position.set(0,yTab,-.10);add(tab,false)}
+    // Pius IX mosaic medallion with the two gilt putti, from a Commons photograph, alpha-masked so the pier is not pasted as a rectangle
+    if(imgs.piusix){const medW=2.15,medH=medW*(imgs.piusix.image.height||938)/(imgs.piusix.image.width||1620);
+      const med=new THREE.Mesh(new THREE.PlaneGeometry(medW,medH),new THREE.MeshStandardMaterial({map:imgs.piusix,roughness:.45,metalness:.08,transparent:true,alphaTest:.2,side:THREE.DoubleSide,depthWrite:true}));
+      med.position.set(0,yTab+tabH/2+.02+medH/2,-.08);add(med,false)}
+    this._peterTwistStand(g,-1.35,.20);this._peterTwistStand(g,1.35,.20);
+    this.peterG=g;this.peterS=1.3;this.peterSlabY=ySlab;
+    this.peterPos=new THREE.Vector3(x,3.0,z);
   }
   // ---------- modelled statues (tools/sculpt): bronze St Peter, the four crossing statues, six founder saints ----------
   // Each figure is sculpted as a signed-distance model (anatomy, drapery folds, faces, hands, attributes), meshed at ~5 mm,
@@ -718,7 +808,13 @@ export class Basilica{
   _place(r,parent,height,x0,y0,z0,rot=0,scl=0,cx=true){const b=r.box,s=scl||height/(b.max.y-b.min.y),o=new THREE.Group(),m=r.node.clone();o.add(m);
     o.scale.setScalar(s);o.position.set(x0-(cx?(b.min.x+b.max.x)/2*s:0),y0-b.min.y*s,z0);o.rotation.y=rot;parent.add(o);this.casters.push(m);return o}
   async _statues(){const names=['longinus','helena','veronica','andrew'];
-    const pe=this._sculpt('peter').then(r=>{const S=this.peterS,o=new THREE.Group(),m=r.node.clone();o.add(m);o.scale.setScalar(S);o.position.set(0,1.7,.35);this.peterG.add(o);this.casters.push(m)});
+    const pe=this._sculpt('peter').then(r=>{const S=this.peterS,o=new THREE.Group(),m=r.node.clone();o.add(m);o.scale.setScalar(S);o.position.set(0,this.peterSlabY,.30);this.peterG.add(o);this.casters.push(m);
+      this.peterG.updateMatrixWorld(true);
+      const box=new THREE.Box3().setFromObject(o);
+      // world +x is into the pier. Place the nimbus behind the face but still visible as a ring around the head.
+      const back=new THREE.Vector3(box.min.x+(box.max.x-box.min.x)*.72,box.min.y+(box.max.y-box.min.y)*.90,(box.min.z+box.max.z)/2);
+      this.peterG.worldToLocal(back);
+      const halo=this._peterHalo(.22);halo.position.set(back.x,back.y,back.z-.02);this.peterG.add(halo)});
     const an=this._sculpt('angel').then(r=>(this.angelSlots||[]).forEach((slot,i)=>{slot.updateWorldMatrix(true,true);const b=new THREE.Box3().setFromObject(slot),h=(b.max.y-b.min.y)/slot.getWorldScale(new THREE.Vector3()).y;slot.clear();
       const o=this._place(r,slot,h*1.2,0,.6,-.1);if(i%2)o.scale.x*=-1}));
     await Promise.all([pe,an,...this.niches.map((f,q)=>this._sculpt(names[q]).then(r=>this._place(r,f,0,0,.45,-1.2,0,2.75)))].map(p=>p.catch(e=>console.warn('statue',e))));}

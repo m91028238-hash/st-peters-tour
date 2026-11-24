@@ -2,8 +2,8 @@
 // The walk/free-cam controls are carried over from "Checkmate in the Sistine" (same eye height, joystick and gestures).
 import * as THREE from 'three';
 import { RoomEnvironment, EffectComposer, RenderPass, UnrealBloomPass, OutputPass } from 'three';
-import { Basilica, D, archCentres } from './basilica.js?v=57';
-import { tex, hotspot } from './textures.js?v=57';
+import { Basilica, D, archCentres } from './basilica.js?v=58';
+import { tex, hotspot } from './textures.js?v=58';
 const EYE=2.05; // adult eye height, metres (as in the chapel game)
 const easeIO=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
 export const PLACES=[ // id, name, where to stand, what to look at, info point position
@@ -25,7 +25,7 @@ export const PLACES=[ // id, name, where to stand, what to look at, info point p
    text:'Designed by Michelangelo and completed by Giacomo della Porta in 1583 for Pope Gregory XIII, this chapel sits beneath one of the basilica’s minor domes. Over its altar is the Madonna del Soccorso, Our Lady of Succour, a venerated 12th-century image brought from the old basilica. Beneath the altar rest the relics of St Gregory of Nazianzus, Doctor of the Church.'},
   {id:'clementine',name:'Clementine Chapel',stand:[-25,34],look:[-25,6.5,19],hot:[-22.8,4.6,21.5],title:'The Clementine Chapel',
    text:'Named after Pope Clement VIII, who had it decorated with marbles and mosaics for the Jubilee of 1600, this chapel keeps the remains of Pope St Gregory the Great (590–604) beneath its altar. The mosaic altarpiece (1772), after Andrea Sacchi, shows the miracle of the cloth from the tomb of the martyrs that bled when Gregory pierced it. On the left wall is Thorvaldsen’s monument to Pope Pius VII.'},
-  {id:'peter',name:'St Peter statue',stand:[4.5,37],look:[12.5,3.0,37],hot:[10.4,4.0,37.4],title:'The bronze statue of St Peter',
+  {id:'peter',name:'St Peter statue',stand:[3.0,37],look:[12.5,4.5,37],hot:[10.4,4.0,37.4],title:'The bronze statue of St Peter',
    text:'This bronze of St Peter enthroned, holding the keys of the Kingdom and raising his hand in blessing, is attributed to Arnolfo di Cambio in the late 13th century. For centuries pilgrims have touched and kissed its right foot, wearing it smooth. On the Solemnity of Saints Peter and Paul, 29 June, the statue is vested in papal robes.'},
 ];
 const P2=(x,z)=>new THREE.Vector3(x,0,z);
@@ -149,7 +149,7 @@ export class Tour{
     const w=this.walk,to=P2(...p.stand),L=new THREE.Vector3(...p.look),dx=L.x-to.x,dz=L.z-to.z,hd=Math.hypot(dx,dz);
     let yaw=Math.atan2(-dx,-dz),pitch=Math.atan2(L.y-EYE,hd);pitch=Math.min(pitch,THREE.MathUtils.degToRad(89));let dy=yaw-w.yawT;dy=Math.atan2(Math.sin(dy),Math.cos(dy));yaw=w.yawT+dy;
     const path=this._route(w.pos,to),Ls=[0];for(let i=1;i<path.length;i++)Ls.push(Ls[i-1]+path[i].distanceTo(path[i-1]));const len=Ls[Ls.length-1];
-    w.glide={path,L:Ls,len,t0:performance.now(),dur:THREE.MathUtils.clamp(900+len*14,900,4200),y0:w.yawT,y1:yaw,p0:w.pitchT,p1:pitch,f0:w.fovTo,f1:p.id==='dome'?75:p.id==='pieta'?38:p.id==='peter'?45:65};this.current=id}
+    w.glide={path,L:Ls,len,t0:performance.now(),dur:THREE.MathUtils.clamp(900+len*14,900,4200),y0:w.yawT,y1:yaw,p0:w.pitchT,p1:pitch,f0:w.fovTo,f1:p.id==='dome'?75:p.id==='pieta'?38:p.id==='peter'?58:65};this.current=id}
   _route(a,b){ // via the nave centreline / crossing so the glide never cuts through piers
     const hub=[P2(0,a.z>D.PIER?Math.min(a.z,D.ENTR-4):0)],pts=[a.clone()];
     const zone=p=>p.z>D.PIER-1&&Math.abs(p.x)>D.NHW?'aisle':p.z>D.PIER-1?'nave':'cross';
