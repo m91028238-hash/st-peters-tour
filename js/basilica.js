@@ -1,6 +1,6 @@
 // St Peter's Basilica interior, in metres. Origin: centre of the crossing at floor level; +z towards the entrance, -z towards the apse.
 import * as THREE from 'three';
-import * as T from './textures.js?v=59';
+import * as T from './textures.js?v=60';
 const V=(x,y,z)=>new THREE.Vector3(x,y,z),PI=Math.PI;
 export const D={NHW:13,ENTR:126,CROSS:20.75,PIER:31,BAY:23.75,ARCH_HW:6.5,ARCH_SPR:15,SPR:33.5,DOME_R:20.75,APSE_C:-47,TRANS_C:55.5,AISLE0:19,AISLE1:31,AISLE_H:22};
 export const archCentres=[0,1,2,3].map(k=>D.PIER+D.BAY*(k+.5));
@@ -835,16 +835,18 @@ export class Basilica{
       if(i%1===0){const l=new THREE.Mesh(new THREE.SphereGeometry(.09,8,6),m.gold);l.position.set(a.x,1.45,a.z);g.add(l);const st=new THREE.Mesh(new THREE.CylinderGeometry(.015,.015,.3,4),m.gold);st.position.set(a.x,1.25,a.z);g.add(st);
         const f=new THREE.Sprite(lampM);f.scale.set(.32,.4,1);f.position.set(a.x,1.6,a.z);g.add(f)}}
   }
-  _peterAlabaster(){const c=document.createElement('canvas');c.width=c.height=512;const g=c.getContext('2d');
+  _peterAlabaster(){const c=document.createElement('canvas');c.width=c.height=1024;const g=c.getContext('2d');
     let s=1307;const rnd=()=>{s=(s*16807)%2147483647;return s/2147483647};
-    const bg=g.createLinearGradient(0,0,40,512);bg.addColorStop(0,'#f3ead8');bg.addColorStop(.45,'#e6d3b0');bg.addColorStop(1,'#efe4cc');
-    g.fillStyle=bg;g.fillRect(0,0,512,512);
-    for(let i=0;i<48;i++){const x=rnd()*512,y=rnd()*512,rx=30+rnd()*100,ry=12+rnd()*36;
-      g.save();g.translate(x,y);g.rotate((rnd()-.5)*.5);g.beginPath();g.ellipse(0,0,rx,ry,0,0,7);
-      g.fillStyle=`rgba(${170+rnd()*50|0},${140+rnd()*40|0},${95+rnd()*30|0},${(.07+rnd()*.16).toFixed(3)})`;g.fill();g.restore()}
-    for(let i=0;i<7;i++){let x=rnd()*512,y=rnd()*512;g.beginPath();g.moveTo(x,y);
-      for(let k=0;k<9;k++){x+=24+(rnd()-.4)*36;y+=(rnd()-.5)*30;g.lineTo(x,y)}
-      g.strokeStyle=`rgba(130,110,80,${(.1+rnd()*.18).toFixed(3)})`;g.lineWidth=1+rnd()*2.5;g.stroke()}
+    g.fillStyle='#ead9b8';g.fillRect(0,0,1024,1024);
+    for(let i=0;i<80;i++){const x=rnd()*1024,y=rnd()*1024,rx=20+rnd()*90,ry=16+rnd()*70;
+      g.save();g.translate(x,y);g.rotate(rnd()*6);
+      g.fillStyle=`rgba(${200+rnd()*40|0},${170+rnd()*40|0},${120+rnd()*40|0},${(.08+rnd()*.22).toFixed(3)})`;
+      g.beginPath();g.ellipse(0,0,rx,ry,0,0,7);g.fill();g.restore()}
+    for(let i=0;i<18;i++){g.strokeStyle=`rgba(${120+rnd()*40|0},${90+rnd()*30|0},${60+rnd()*20|0},${(.08+rnd()*.14).toFixed(3)})`;
+      g.lineWidth=1+rnd()*3;g.beginPath();
+      let x=rnd()*1024,y=rnd()*1024;g.moveTo(x,y);
+      for(let k=0;k<8;k++){x+=(rnd()-.5)*80;y+=(rnd()-.5)*80;g.quadraticCurveTo(x+(rnd()-.5)*40,y+(rnd()-.5)*40,x,y)}
+      g.stroke()}
     return c}
   _peterNero(){const c=document.createElement('canvas');c.width=c.height=512;const g=c.getContext('2d');
     let s=2203;const rnd=()=>{s=(s*16807)%2147483647;return s/2147483647};
@@ -877,48 +879,100 @@ export class Basilica{
       m.rotation.y=i*.48;m.position.set(x,y,z);g.add(m)}
     const cap=new THREE.Mesh(new THREE.CylinderGeometry(.11,.12,.05,12),dark);cap.position.set(x,.13+h,.0+z);g.add(cap)}
   // ---------- bronze St Peter (Arnolfo di Cambio, attrib.) on Marchionni's 1757 pedestal, against the pier of St Longinus ----------
+  _peterPalmette(){const S=512,c=document.createElement('canvas');c.width=c.height=S;const g=c.getContext('2d');
+    g.fillStyle='#3a2a18';g.fillRect(0,0,S,S);
+    const gold='#c9a24e',ink='#2a1c0c';
+    g.strokeStyle=gold;g.lineWidth=10;g.strokeRect(18,18,S-36,S-36);g.lineWidth=3;g.strokeRect(32,32,S-64,S-64);
+    g.save();g.translate(S/2,S*0.62);g.fillStyle=gold;
+    // palmette fan, modelled after the bronze chair sides (not a photograph)
+    for(let i=-6;i<=6;i++){const a=i/7*Math.PI*0.72;g.save();g.rotate(a);
+      g.beginPath();g.ellipse(0,-110,16,120,0,0,7);g.fill();g.restore()}
+    g.fillStyle='#e8c86a';g.beginPath();g.ellipse(0,-20,28,36,0,0,7);g.fill();
+    g.beginPath();g.moveTo(-70,40);g.quadraticCurveTo(-90,90,-40,120);g.quadraticCurveTo(-10,80,0,40);g.quadraticCurveTo(10,80,40,120);g.quadraticCurveTo(90,90,70,40);g.closePath();g.fill();
+    g.restore();
+    // upper band of palmettes
+    g.fillStyle=gold;
+    for(let i=0;i<5;i++){const x=70+i*90,y=80;g.beginPath();
+      for(let k=-3;k<=3;k++){g.ellipse(x+k*8,y-18,5,22,k*0.15,0,7)}g.fill();
+      g.beginPath();g.arc(x,y+6,10,0,7);g.fill()}
+    return c}
+  // Arnolfo's bronze throne (the chair is part of the statue, not a marble surround): deep seat,
+  // scroll arms, palmette/acanthus side panels, back finials. Proportions from photographs, not a survey.
+  _peterBronzeThrone(g,ty){const add=(o,cast=true)=>{o.castShadow=cast;o.receiveShadow=true;g.add(o);if(cast)this.casters.push(o);return o};
+    const bx=(w,h,d,x0,y0,z0,m,cast=true)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x0,y0,z0);return add(o,cast)};
+    const br=new THREE.MeshStandardMaterial({color:0x8a6230,metalness:.84,roughness:.34});
+    const brDark=new THREE.MeshStandardMaterial({color:0x5a3a18,metalness:.7,roughness:.48});
+    const gilt=this.mat.gold;
+    const pal=new THREE.MeshStandardMaterial({map:T.tex(this._peterPalmette(),{wrap:false,aniso:4}),metalness:.55,roughness:.4,color:0xddccaa});
+    // low bronze plinth of the chair, on the marble slab
+    bx(1.08,.07,.92,0,ty+.035,.22,br);
+    // seat: deep, recessed slightly
+    bx(.78,.10,.58,0,ty+.42,.18,br);
+    bx(.70,.03,.50,0,ty+.48,.18,brDark);
+    // back: tall, sits behind the shoulders, inner face toward the nave
+    const backW=.96,backH=1.02,backT=.15;
+    const sh=new THREE.Shape();
+    sh.moveTo(-backW/2,0);sh.lineTo(-backW/2,backH*.70);
+    sh.bezierCurveTo(-backW/2,backH,-backW*.16,backH+.08,0,backH+.08);
+    sh.bezierCurveTo(backW*.16,backH+.08,backW/2,backH,backW/2,backH*.70);
+    sh.lineTo(backW/2,0);sh.closePath();
+    const back=new THREE.Mesh(new THREE.ExtrudeGeometry(sh,{depth:backT,bevelEnabled:true,bevelThickness:.02,bevelSize:.02,bevelSegments:2}),br);
+    back.position.set(0,ty+.48,-.22);add(back);
+    // recessed back panel
+    bx(backW-0.22,.70,.02,0,ty+.95,-.22+backT+.01,brDark,false);
+    // sides and palmette cheeks
+    for(const s of[-1,1]){
+      bx(.13,.62,.78,s*.46,ty+.34,.16,br);
+      const pan=new THREE.Mesh(new THREE.BoxGeometry(.02,.44,.36),pal);
+      pan.position.set(s*(.46+.07),ty+.30,.08);add(pan,false);
+      const pan2=new THREE.Mesh(new THREE.BoxGeometry(.02,.16,.36),pal);
+      pan2.position.set(s*(.46+.07),ty+.58,.08);add(pan2,false);
+      // scroll arm: volute at the front, rail to the back
+      bx(.11,.07,.52,s*.46,ty+.66,.10,br);
+      const vol=new THREE.Mesh(new THREE.TorusGeometry(.095,.032,10,20,Math.PI),br);
+      vol.rotation.y=Math.PI/2;vol.rotation.z=s>0?0:Math.PI;vol.position.set(s*.46,ty+.70,.38);add(vol);
+      const rail=new THREE.Mesh(new THREE.CylinderGeometry(.035,.035,.18,10),br);
+      rail.position.set(s*.46,ty+.58,.38);add(rail);
+      const paw=new THREE.Mesh(new THREE.SphereGeometry(.06,12,10),br);
+      paw.position.set(s*.46,ty+.08,.46);add(paw);
+      // back post finial
+      const fin=new THREE.Mesh(new THREE.SphereGeometry(.055,12,10),gilt);
+      fin.position.set(s*(backW/2-.06),ty+.48+backH+.04,-.22+backT/2);add(fin);
+      const knob=new THREE.Mesh(new THREE.CylinderGeometry(.03,.04,.08,8),gilt);
+      knob.position.set(s*(backW/2-.06),ty+.48+backH-.02,-.22+backT/2);add(knob)}
+    return {seatZ:.18,seatY:ty+.47,backZ:-.22,frontZ:.62}}
   _peter(imgs){const g=new THREE.Group();this.s.add(g);const x=D.NHW-.5,z=D.PIER+6.0; // nave side of the right crossing pier
     g.position.set(x,0,z);g.rotation.y=-PI/2;
     const add=(o,cast=true)=>{o.castShadow=cast;o.receiveShadow=true;g.add(o);if(cast)this.casters.push(o);return o};
     const bx=(w,h,d,x0,y0,z0,m,cast=true)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x0,y0,z0);return add(o,cast)};
-    const alb=new THREE.MeshStandardMaterial({map:T.tex(this._peterAlabaster()),roughness:.32,metalness:.02,color:0xfff6e8});
+    const alb=new THREE.MeshStandardMaterial({map:T.tex(this._peterAlabaster()),roughness:.38,metalness:.02,color:0xf0e0c4});
     const nero=new THREE.MeshStandardMaterial({map:T.tex(this._peterNero()),roughness:.36,color:0xffffff});
     const jasper=new THREE.MeshStandardMaterial({map:T.tex(this._peterJasper()),roughness:.48});
     const gold=this.mat.gold,mw=this.mat.marbleW,trav=this.mat.travWarm;
     // stepped pedestal (Carlo Marchionni, 1757): black-veined socle, cream-veined die with dark inlaid panels in a gilt frame, moulded cornice, top slab.
     // Height fitted so the feet are at about kissing height; not a surveyed measurement.
     const hs=.40,hm=.14,hd=.58,hc=.12,ht=.10,ySlab=hs+hm+hd+hc+ht;
-    bx(1.88,hs,1.38,0,hs/2,.18,nero);
-    bx(1.76,hm,1.26,0,hs+hm/2,.16,alb);
-    bx(1.64,hd,1.16,0,hs+hm+hd/2,.14,alb);
-    const yDie=hs+hm+hd/2,zFront=.14+1.16/2;
-    bx(1.12,.42,.02,0,yDie,zFront+.005,gold,false);bx(1.02,.34,.02,0,yDie,zFront+.015,jasper,false);
-    for(const s of[-1,1]){const xs=s*(1.64/2);bx(.02,.42,0.85,xs+s*.015,yDie,.14,gold,false);bx(.02,.34,0.75,xs+s*.025,yDie,.14,jasper,false)}
-    bx(1.86,.05,1.36,0,hs+hm+hd+.025,.16,alb); // projecting lower cornice
-    bx(1.78,hc,1.28,0,hs+hm+hd+hc/2,.16,alb);
-    bx(1.92,.06,1.40,0,hs+hm+hd+hc-.01,.16,alb); // upper cornice overhang
-    bx(1.56,ht,1.12,0,ySlab-ht/2,.22,alb);
-    // carved marble throne: shaped back to about shoulder height, scrolled arms, palmette side relief from a Commons photograph
-    const ty=ySlab;
-    bx(.84,.09,.62,0,ty+.045,.14,mw);
-    const backW=.80,backH=.92;
-    const sh=new THREE.Shape();
-    sh.moveTo(-backW/2,0);sh.lineTo(-backW/2,backH*.72);
-    sh.bezierCurveTo(-backW/2,backH,-backW*.12,backH+.07,0,backH+.07);
-    sh.bezierCurveTo(backW*.12,backH+.07,backW/2,backH,backW/2,backH*.72);
-    sh.lineTo(backW/2,0);sh.closePath();
-    const back=new THREE.Mesh(new THREE.ExtrudeGeometry(sh,{depth:.16,bevelEnabled:true,bevelThickness:.015,bevelSize:.015,bevelSegments:2}),mw);
-    back.position.set(0,ty+.09,-.08);add(back);
-    const cheek=new THREE.MeshStandardMaterial({map:imgs.throne||null,color:imgs.throne?0xffffff:0xe8e0d4,roughness:.45,metalness:0});
+    // deeper die so the bronze chair and the projecting knees sit on the slab (back almost at the pier)
+    const zPed=.28;
+    bx(1.88,hs,1.55,0,hs/2,zPed,nero);
+    bx(1.76,hm,1.42,0,hs+hm/2,zPed,alb);
+    bx(1.64,hd,1.32,0,hs+hm+hd/2,zPed,alb);
+    const yDie=hs+hm+hd/2,zFront=zPed+1.32/2;
+    // inlaid side and front panels: framed dark stone, not a blank black tablet
+    const inlay=new THREE.MeshStandardMaterial({map:T.tex(this._peterJasper()),roughness:.42,color:0xb08a62});
+    // small corner and mid-side stones only — the real die is alabaster, not a black plaque
     for(const s of[-1,1]){
-      const ch=new THREE.Mesh(new THREE.BoxGeometry(.08,.90,.42),cheek);
-      ch.position.set(s*(backW/2-.02),ty+.09+.45,.08);add(ch);
-      bx(.11,.07,.50,s*.40,ty+.48,.14,mw);
-      const v=new THREE.Mesh(new THREE.TorusGeometry(.075,.028,8,16,Math.PI),mw);v.rotation.y=PI/2;v.rotation.z=s>0?0:PI;v.position.set(s*.40,ty+.52,.38);add(v);
-      bx(.09,.42,.09,s*.40,ty+.22,.34,mw);
-      const paw=new THREE.Mesh(new THREE.SphereGeometry(.055,10,8),mw);paw.position.set(s*.40,ty+.05,.34);add(paw)}
-    // 1871 brocatello mosaic dossal (photograph, not an invented pattern) in a shallow pier recess. No free-standing posts.
-    const mW=3.15,mH=4.85,mY=ySlab+.2+mH/2,mZ=-.22;
+      bx(.22,.16,.018,s*.48,yDie,zFront+.01,gold,false);
+      bx(.16,.10,.018,s*.48,yDie,zFront+.02,inlay,false);
+      bx(.018,.16,.22,s*(1.64/2+.012),yDie,zPed+s*0,gold,false)}
+    bx(1.86,.06,1.52,0,hs+hm+hd+.03,zPed,alb);
+    bx(1.78,hc,1.42,0,hs+hm+hd+hc/2,zPed,alb);
+    bx(1.96,.07,1.58,0,hs+hm+hd+hc-.01,zPed,alb);
+    bx(1.70,ht,1.48,0,ySlab-ht/2,zPed+.06,alb);
+    const ty=ySlab;
+    this._peterBronzeThrone(g,ty);
+    // 1871 brocatello mosaic dossal, pushed back against the pier so the chair can have true depth
+    const mW=3.15,mH=4.85,mY=ySlab+.2+mH/2,mZ=-.46;
     if(imgs.brocade){const ph=new THREE.Mesh(new THREE.PlaneGeometry(mW,mH),new THREE.MeshStandardMaterial({map:imgs.brocade,roughness:.5,metalness:.08,side:THREE.DoubleSide}));ph.position.set(0,mY,mZ);add(ph,false)}
     bx(mW+.08,mH+.08,.03,0,mY,mZ-.02,gold,false); // gilt frame around the mosaic
     // 1871 wall-mounted gilt canopy: tester roof, photographed front valance, photographed side returns. No legs to the floor.
@@ -933,15 +987,15 @@ export class Basilica{
     else{const burg=new THREE.MeshStandardMaterial({color:0x5a1c2a,roughness:.45,metalness:.15});
       bx(.04,valH,cD,-cW/2,yCan-valH/2+.02,cD/2-.12,burg,false);bx(.04,valH,cD,cW/2,yCan-valH/2+.02,cD/2-.12,burg,false)}
     // inscription tablet: PIO IX PONT MAX / QVI PETRI ANNOS / IN PONTIFICATV ROMANO / VNVS AEQVAVIT / CLERVS VATICANVS / SACRAM ORNAVIT SEDEM / XVI KAL QVINT A MDCCCLXXI
-    const tabW=2.2,tabH=1.28,yTab=yCan+cT+.12+tabH/2;
-    bx(tabW+.16,tabH+.16,.10,0,yTab,-.16,gold,false);
-    if(imgs.tablet){const tab=new THREE.Mesh(new THREE.PlaneGeometry(tabW,tabH),new THREE.MeshStandardMaterial({map:imgs.tablet,roughness:.32,metalness:.12}));tab.position.set(0,yTab,-.10);add(tab,false)}
+    const tabW=2.2,tabH=1.28,yTab=yCan+cT+.36+tabH/2;
+    bx(tabW+.16,tabH+.16,.08,0,yTab,mZ+.02,gold,false);
+    if(imgs.tablet){const tab=new THREE.Mesh(new THREE.PlaneGeometry(tabW,tabH),new THREE.MeshStandardMaterial({map:imgs.tablet,emissiveMap:imgs.tablet,emissive:0xffffff,emissiveIntensity:.35,roughness:.32,metalness:.12}));tab.position.set(0,yTab,mZ+.08);add(tab,false)}
     // Pius IX mosaic medallion with the two gilt putti, from a Commons photograph, alpha-masked so the pier is not pasted as a rectangle
     if(imgs.piusix){const medW=2.15,medH=medW*(imgs.piusix.image.height||938)/(imgs.piusix.image.width||1620);
       const med=new THREE.Mesh(new THREE.PlaneGeometry(medW,medH),new THREE.MeshStandardMaterial({map:imgs.piusix,roughness:.45,metalness:.08,transparent:true,alphaTest:.2,side:THREE.DoubleSide,depthWrite:true}));
-      med.position.set(0,yTab+tabH/2+.02+medH/2,-.08);add(med,false)}
+      med.position.set(0,yTab+tabH/2+.02+medH/2,mZ+.14);add(med,false)}
     this._peterTwistStand(g,-1.35,.20);this._peterTwistStand(g,1.35,.20);
-    this.peterG=g;this.peterS=1.3;this.peterSlabY=ySlab;
+    this.peterG=g;this.peterS=1.3;this.peterSlabY=ySlab;this.peterZ=-0.05; // back in the chair; feet slightly over the slab
     this.peterPos=new THREE.Vector3(x,3.0,z);
   }
   // ---------- modelled statues (tools/sculpt): bronze St Peter, the four crossing statues, six founder saints ----------
@@ -955,14 +1009,14 @@ export class Basilica{
       let node=null;gl.scene.updateMatrixWorld(true);gl.scene.traverse(o=>{if(o.isMesh&&!node)node=o});
       node.removeFromParent();node.matrix.copy(node.matrixWorld);node.matrix.decompose(node.position,node.quaternion,node.scale);
       const opt={normalMap:n,normalScale:new THREE.Vector2(1,-1),aoMap:ao,aoMapIntensity:bronze?.8:(c?.45:.6)};
-      const mat=k==='peter'?new THREE.MeshStandardMaterial({...opt,map:c,color:new THREE.Color(.95,.88,.8),metalness:.42,roughness:.42,envMapIntensity:1.3})
+      const mat=k==='peter'?new THREE.MeshStandardMaterial({...opt,map:c,color:new THREE.Color(.78,.62,.45),metalness:.7,roughness:.36,envMapIntensity:1.15})
         :k==='angel'?new THREE.MeshStandardMaterial({...opt,color:0xe2b45c,metalness:.95,roughness:.3,envMapIntensity:1.4})
         :new THREE.MeshStandardMaterial({...opt,...(c?{map:c,color:new THREE.Color(1.02,1.0,.97)}:{color:0xf1ebdf}),roughness:.46,metalness:0,envMapIntensity:.7,emissive:0x221f1a});
       node.material=mat;node.castShadow=!this.mobile;node.receiveShadow=true;const box=new THREE.Box3().setFromObject(node);return {node,box,mat}})}
   _place(r,parent,height,x0,y0,z0,rot=0,scl=0,cx=true){const b=r.box,s=scl||height/(b.max.y-b.min.y),o=new THREE.Group(),m=r.node.clone();o.add(m);
     o.scale.setScalar(s);o.position.set(x0-(cx?(b.min.x+b.max.x)/2*s:0),y0-b.min.y*s,z0);o.rotation.y=rot;parent.add(o);this.casters.push(m);return o}
   async _statues(){const names=['longinus','helena','veronica','andrew'];
-    const pe=this._sculpt('peter').then(r=>{const S=this.peterS,o=new THREE.Group(),m=r.node.clone();o.add(m);o.scale.setScalar(S);o.position.set(0,this.peterSlabY,.30);this.peterG.add(o);this.casters.push(m);
+    const pe=this._sculpt('peter').then(r=>{const S=this.peterS,o=new THREE.Group(),m=r.node.clone();o.add(m);o.scale.setScalar(S);o.position.set(0,this.peterSlabY,this.peterZ);this.peterG.add(o);this.casters.push(m);
       this.peterG.updateMatrixWorld(true);
       const box=new THREE.Box3().setFromObject(o);
       // world +x is into the pier. Place the nimbus behind the face but still visible as a ring around the head.
