@@ -2,8 +2,8 @@
 // The walk/free-cam controls are carried over from "Checkmate in the Sistine" (same eye height, joystick and gestures).
 import * as THREE from 'three';
 import { RoomEnvironment, EffectComposer, RenderPass, UnrealBloomPass, OutputPass } from 'three';
-import { Basilica, D, archCentres } from './basilica.js?v=54';
-import { tex, hotspot } from './textures.js?v=54';
+import { Basilica, D, archCentres } from './basilica.js?v=55';
+import { tex, hotspot } from './textures.js?v=55';
 const EYE=2.05; // adult eye height, metres (as in the chapel game)
 const easeIO=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
 export const PLACES=[ // id, name, where to stand, what to look at, info point position
@@ -66,7 +66,8 @@ export class Tour{
       for(const zc of archCentres)if(R(s>0?NHW-1:-A0,s>0?A0:-NHW+1,zc-D.ARCH_HW,zc+D.ARCH_HW))return true; // arcades
       if(s>0&&R(A1-1,A1+1.6,archCentres[3]-5,archCentres[3]+5))return true; // in front of the Pietà glass
       if(s>0&&R(A1-1,A1+9.6,archCentres[1]-5,archCentres[1]+5))return true; // Chapel of the Blessed Sacrament
-      if(R(s>0?A0:-A1,s>0?A1:-A0,19,PIER+1))return true;} // Gregorian / Clementine corner chapels
+      if(R(s>0?A0:-A1,s>0?A1:-A0,19,PIER+1))return true; // Gregorian / Clementine corner chapels
+      if(R(s>0?A0:-A1,s>0?A1:-A0,-PIER-1,-19))return true;} // Madonna of the Column / Sts Michael & Petronilla
     if(Math.abs(x)<C-m&&Math.abs(z)<C-m&&Math.abs(x)+Math.abs(z)<12+C-m*1.4)return true; // crossing octagon
     if(R(-12,12,-PIER,C+1)||R(-PIER,PIER,-12,12))return true; // arch tunnels
     if(R(-NHW,NHW,APSE_C,-PIER+.5)||Math.hypot(x,z-APSE_C)<NHW-m&&z<APSE_C)return true; // apse arm
@@ -180,7 +181,7 @@ export class Tour{
     const spd=Math.hypot(w.vel.x,w.vel.z),base=4.6*(this.speedMul||6),amt=Math.min(.65,spd/base);w.phase+=dt*(spd/base)*4.6*1.15;
     c.position.set(w.pos.x,EYE+Math.sin(w.phase*2)*.025*amt,w.pos.z);c.rotation.set(w.pitch,w.yaw,0,'YXZ');if(Math.abs(c.fov-w.fov)>.01){c.fov=w.fov;c.updateProjectionMatrix()}
     this._where()}
-  _where(){const p=this.walk.pos;let n='The nave';if(p.z<D.PIER&&p.z>-D.PIER&&Math.abs(p.x)<D.PIER)n='Under the dome';else if(p.z<-D.PIER)n='The apse';else if(Math.abs(p.x)>D.PIER&&p.z<D.PIER)n='The transept';else if(Math.abs(p.x)>D.NHW)n=p.x>0&&p.z>100?'The Pietà chapel':'The side aisle';
+  _where(){const p=this.walk.pos;let n='The nave';if(p.z<D.PIER&&p.z>-D.PIER&&Math.abs(p.x)<D.PIER)n='Under the dome';else if(p.z<-D.PIER)n='The apse';else if(Math.abs(p.x)>D.PIER&&p.z<D.PIER)n='The transept';else if(p.z<-19&&p.z>-D.PIER&&Math.abs(p.x)>D.AISLE0)n=p.x>0?'The Chapel of Sts Michael and Petronilla':'The Chapel of Our Lady of the Column';else if(Math.abs(p.x)>D.NHW)n=p.x>0&&p.z>100?'The Pietà chapel':'The side aisle';
     if(n!==this._wn){this._wn=n;this.onStatus(n)}}
   // ---------- Free cam: steady orbit around a work of art ----------
   setMode(m){if(m===this.mode)return;this.mode=m;const c=this.camera;

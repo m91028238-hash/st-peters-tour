@@ -137,3 +137,15 @@ export function oculusStars({w=2048,h=256}={}){const [c,g]=cv(w,h);
     // two lesser stars toward the rim of each bay
     g.fillStyle='#d4b24a';star(cx-w/48,cy-h*.28,h*.09,h*.03);g.fill();star(cx+w/48,cy+h*.28,h*.09,h*.03);g.fill()}
   return c}
+
+// radial gilt coffers for a minor dome whose real mosaic is not confirmed (never a copy of another chapel)
+export function minorCoffers({w=1024}={}){const [c,g]=cv(w,w),cx=w/2,cy=w/2;
+  g.fillStyle='#6a4e28';g.fillRect(0,0,w,w);
+  const n=16;
+  for(let i=0;i<n;i++){const a0=i*Math.PI*2/n,a1=(i+1)*Math.PI*2/n;
+    for(let ring=0;ring<5;ring++){const r0=(ring+.15)*w/2/5.4,r1=(ring+.85)*w/2/5.4;
+      g.beginPath();g.arc(cx,cy,r1,a0+.03,a1-.03);g.arc(cx,cy,r0,a1-.03,a0+.03,true);g.closePath();
+      const gr=g.createRadialGradient(cx,cy,r0,cx,cy,r1);gr.addColorStop(0,'#e8c56a');gr.addColorStop(.55,'#b8893a');gr.addColorStop(1,'#7a5420');
+      g.fillStyle=gr;g.fill();g.strokeStyle='rgba(255,230,160,.35)';g.lineWidth=2;g.stroke()}}
+  g.beginPath();g.arc(cx,cy,w*.07,0,7);g.fillStyle='#c9a24e';g.fill();
+  return c}
